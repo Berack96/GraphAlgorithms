@@ -229,6 +229,17 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     Set<Edge<V, W>> edges();
 
     /**
+     * Retrieve all the edges from a particular vertex.<br>
+     * Note: the edges that is returned are the edges that goes IN this vertex AND the edges that goes OUT of it.
+     *
+     * @param vertex a vertex of the graph
+     * @return a set of edges
+     * @throws NullPointerException     if the vertex is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    Set<Edge<V, W>> edgesOf(V vertex) throws NullPointerException, IllegalArgumentException;
+
+    /**
      * Get all the vertices that are children of the vertex passed as parameter.<br>
      * The vertices V(0-N) that are 'children' of a vertex V1, are all the vertices that have an edge
      * where V1 is the source of that edge.

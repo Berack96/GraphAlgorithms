@@ -1,6 +1,7 @@
 package berack96.test.sim;
 
 import berack96.sim.util.graph.Graph;
+import berack96.sim.util.graph.MapGraph;
 import berack96.sim.util.graph.visit.BFS;
 import berack96.sim.util.graph.visit.DFS;
 import berack96.sim.util.graph.visit.VisitStrategy;
@@ -21,7 +22,7 @@ public class TestGraph {
     @Before
     public void before() {
         // Change here the instance for changing all the test for that particular class
-        graph = null;
+        graph = new MapGraph<>();
     }
 
     @Test
@@ -310,6 +311,14 @@ public class TestGraph {
                 new Graph.Edge<>("2", "6", 5),
                 new Graph.Edge<>("3", "5", 2),
                 new Graph.Edge<>("4", "6", 6),
+                new Graph.Edge<>("5", "3", 9),
+                new Graph.Edge<>("5", "4", 5));
+
+        shouldThrow(nullException, () -> graph.edgesOf(null));
+        shouldThrow(notException, () -> graph.edgesOf("rew"));
+        shouldContain(graph.edgesOf("5"),
+                new Graph.Edge<>("2", "5", 4),
+                new Graph.Edge<>("3", "5", 2),
                 new Graph.Edge<>("5", "3", 9),
                 new Graph.Edge<>("5", "4", 5));
     }

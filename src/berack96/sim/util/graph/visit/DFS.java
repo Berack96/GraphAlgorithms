@@ -12,23 +12,13 @@ import java.util.function.Consumer;
  *
  * @param <V> the vertex of the graph
  * @param <W> the weight of the graph
+ * @author Berack96
  */
 public class DFS<V, W extends Number> implements VisitStrategy<V, W> {
 
-    private VisitInfo<V> lastVisit = null;
-
-    /**
-     * Retrieve the info of the last visit
-     *
-     * @return an info of the visit
-     */
-    public VisitInfo<V> getLastVisit() {
-        return lastVisit;
-    }
-
     @Override
-    public void visit(Graph<V, W> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
-        lastVisit = new VisitInfo<>(source);
+    public VisitInfo<V> visit(Graph<V, W> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
+        VisitInfo<V> info = new VisitInfo<>(source);
         final Stack<V> toVisit = new Stack<>();
 
         toVisit.push(source);
@@ -40,19 +30,20 @@ public class DFS<V, W extends Number> implements VisitStrategy<V, W> {
 
             while (iter.hasNext() && !hasChildToVisit) {
                 V child = iter.next();
-                if (!lastVisit.isDiscovered(child)) {
+                if (!info.isDiscovered(child)) {
                     hasChildToVisit = true;
                     toVisit.push(child);
-                    lastVisit.setParent(current, child);
+                    info.setParent(current, child);
                 }
             }
 
             if (!hasChildToVisit) {
                 toVisit.pop();
-                lastVisit.setVisited(current);
+                info.setVisited(current);
                 if (visit != null)
                     visit.accept(current);
             }
         }
+        return info;
     }
 }

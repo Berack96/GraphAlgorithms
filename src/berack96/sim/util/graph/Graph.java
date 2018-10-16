@@ -1,10 +1,11 @@
 package berack96.sim.util.graph;
 
+import berack96.sim.util.graph.visit.VisitInfo;
 import berack96.sim.util.graph.visit.VisitStrategy;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -41,6 +42,17 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     boolean isDAG();
 
     /**
+     * Get an instance of the vertex linked with this graph.<br>
+     * For more info see {@link Vertex}
+     *
+     * @param vertex the vertex
+     * @return a vertex
+     * @throws NullPointerException     if the vertex is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    Vertex<V> getVertex(V vertex) throws NullPointerException, IllegalArgumentException;
+
+    /**
      * Add the vertex to the graph. If it's already in the graph it will be replaced.<br>
      * Of course the vertex added will have no edge to any other vertex nor form any other vertex.
      *
@@ -60,24 +72,23 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     boolean addVertexIfAbsent(V vertex) throws NullPointerException;
 
     /**
-     * Add all the vertices contained in the set to the graph.<br>
-     * If a vertex is contained in the set and in the graph is ignored and it will not be replaced.<br>
+     * Add all the vertices contained in the collection to the graph.<br>
+     * If a vertex is contained in the collection and in the graph is ignored and it will not be replaced.<br>
      * Null vertices will be ignored and they will not be added to the graph.
      *
-     * @param vertices a set containing the vertices
+     * @param vertices a collection of the vertices to add
      * @throws NullPointerException if the set is null
      */
-    void addAllVertices(Set<V> vertices) throws NullPointerException;
+    void addAllVertices(Collection<V> vertices) throws NullPointerException;
 
     /**
      * Remove the selected vertex from the graph.<br>
      * After this method's call the vertex will be no longer present in the graph, and nether all his edges.
      *
      * @param vertex the vertex to remove
-     * @throws NullPointerException     if the vertex is null
-     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     * @throws NullPointerException if the vertex is null
      */
-    void removeVertex(V vertex) throws NullPointerException, IllegalArgumentException;
+    void removeVertex(V vertex) throws IllegalArgumentException;
 
     /**
      * Remove all the vertex contained in the graph.<br>
@@ -97,6 +108,63 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     boolean contains(V vertex) throws NullPointerException;
 
     /**
+     * Add to the specified vertex the mark passed.<br>
+     * A vertex can have multiple marker.
+     *
+     * @param vertex the vertex to mark
+     * @param mark   the mark to add
+     * @throws NullPointerException     if one of the param is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    void mark(V vertex, String mark) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Remove the selected mark from the vertex.<br>
+     *
+     * @param vertex the vertex where remove the mark
+     * @param mark   the mark to remove
+     * @throws NullPointerException     if a param is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    void unMark(V vertex, String mark) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Unmark the vertex selected.<br>
+     * After this call the vertex will not have any marked object to himself.
+     *
+     * @param vertex the vertex
+     * @throws NullPointerException     if the vertex is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    void unMark(V vertex) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Get all the marker of this vertex.<br>
+     * If the vertex doesn't have any mark, then it will return an empty set.<br>
+     * Note: this set is linked to the marked vertex, so any changes to the set returned are reflected to the graph.
+     *
+     * @param vertex the vertex
+     * @return all the mark to the vertex or an empty collection if none
+     * @throws NullPointerException     if the vertex is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    Collection<String> getMarks(V vertex) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Remove the selected mark from all the vertices
+     *
+     * @param mark the mark to remove
+     * @throws NullPointerException if the mark is null
+     */
+    void unMarkAll(String mark) throws NullPointerException;
+
+    /**
+     * Remove all the marker to all the vertex.<br>
+     * After this call the {@link #getMarks(Object)} applied to any vertex will return an empty set
+     */
+    void unMarkAll();
+
+    /**
      * Add an edge between the two vertex.<br>
      * The edge will be created from the vertex V1 and the vertex V2<br>
      * This method will overwrite any existing edge between the two vertex.<br>
@@ -105,11 +173,24 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param vertex1 a vertex of the graph
      * @param vertex2 a vertex of the graph
      * @param weight  the weight of the edge
-     * @return null or the previous value of the edge if there was already one
+     * @return null or the previous weight of the edge if there was already one
      * @throws NullPointerException     if one of the parameter is null
      * @throws IllegalArgumentException if one of the vertex is not contained in the graph
      */
     W addEdge(V vertex1, V vertex2, W weight) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Add an edge between the two vertex.<br>
+     * The edge will be created from the vertex source of the edge and the vertex destination of it<br>
+     * This method will overwrite any existing edge between the two vertex.<br>
+     * If there was a previous edge then it is returned
+     *
+     * @param edge the edge to add
+     * @return null or the previous weight of the edge if there was already one
+     * @throws NullPointerException     if one of the parameter is null
+     * @throws IllegalArgumentException if one of the vertex is not contained in the graph
+     */
+    W addEdge(Edge<V, W> edge) throws NullPointerException, IllegalArgumentException;
 
     /**
      * This particular function add an edge to the graph.<br>
@@ -121,13 +202,26 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param vertex1 a vertex of the graph
      * @param vertex2 a vertex of the graph
      * @param weight  the weight of the edge
-     * @return null or the previous value of the edge if there was already one
+     * @return null or the previous weight of the edge if there was already one
      * @throws NullPointerException if one of the parameter is null
      */
     W addEdgeAndVertices(V vertex1, V vertex2, W weight) throws NullPointerException;
 
     /**
-     * Add all the edges of the set in the graph.<br>
+     * This particular function add an edge to the graph.<br>
+     * If one of the two, or both vertices of the edge aren't contained in the graph, then the vertices will be added.<br>
+     * The edge will be created from the vertex source of the edge and the vertex destination of it<br>
+     * This method will overwrite any existing edge between the two vertex.<br>
+     * If there was a previous edge then it is returned
+     *
+     * @param edge the edge to add
+     * @return null or the previous weight of the edge if there was already one
+     * @throws NullPointerException if one of the parameter is null
+     */
+    W addEdgeAndVertices(Edge<V, W> edge) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Add all the edges of the collection to the graph.<br>
      * If one of the two, or both vertices aren't contained in the graph, then the vertices will be added.<br>
      * Any null edges will be ignored.<br>
      * This method will overwrite any existing edge between the two vertex.
@@ -135,7 +229,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param edges the edges to add
      * @throws NullPointerException if the set is null
      */
-    void addAllEdges(Set<Edge<V, W>> edges) throws NullPointerException;
+    void addAllEdges(Collection<Edge<V, W>> edges) throws NullPointerException;
 
     /**
      * Get the weight of the selected edge.<br>
@@ -188,7 +282,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      *
      * @param vertex a vertex of the graph
      * @throws NullPointerException     if the vertex is null
-     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     * @throws IllegalArgumentException if one of the vertex is not contained in the graph
      */
     void removeAllEdge(V vertex) throws NullPointerException, IllegalArgumentException;
 
@@ -200,44 +294,66 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     /**
      * Check if the edge between the two vertex passed is contained in the graph or not.<br>
-     * An edge between V1 and V2 is contained in the graph if and only if i can travel from V1 to V2.
+     * An edge between V1 and V2 is contained in the graph if and only if i can travel from V1 to V2.<br>
+     * If one of the two vertices is not contained in the graph, then even the edge isn't
      *
      * @param vertex1 a vertex of the graph
      * @param vertex2 a vertex of the graph
      * @return true if the edge is contained, false otherwise
-     * @throws NullPointerException     if one of the parameters is null
-     * @throws IllegalArgumentException if one of the vertex is not contained in the graph
+     * @throws NullPointerException if one of the parameters is null
      */
-    boolean containsEdge(V vertex1, V vertex2) throws NullPointerException, IllegalArgumentException;
+    boolean containsEdge(V vertex1, V vertex2) throws NullPointerException;
 
     /**
      * Get all the vertices in the graph.<br>
-     * If the graph doesn't contains vertices, it'll return an empty set.<br>
-     * Note that this set is completely different than the set used for the vertices, so any modification of this set will not change the graph.
+     * If the graph doesn't contains vertices, it'll return an empty collection.<br>
+     * Note that this collection is completely different the object used for the vertices, so any modification to this collection will not change the graph.
      *
-     * @return a set that include all the vertices
+     * @return an array that include all the vertices
      */
-    Set<V> vertices();
+    Collection<V> vertices();
 
     /**
      * Get all the edges in the graph.<br>
-     * If the graph doesn't contains edges, it'll return an empty set.<br>
-     * Note that this set is completely different than the set used for the edges, so any modification of this set will not change the graph.
+     * If the graph doesn't contains edges, it'll return an empty collection.<br>
+     * Note that this collection is completely different than the object used for the edges, so any modification to this collection will not change the graph.
      *
-     * @return a set that include all the edges
+     * @return a collection that include all the edges
      */
-    Set<Edge<V, W>> edges();
+    Collection<Edge<V, W>> edges();
 
     /**
-     * Retrieve all the edges from a particular vertex.<br>
-     * Note: the edges that is returned are the edges that goes IN this vertex AND the edges that goes OUT of it.
+     * Retrieve all the edges of a particular vertex.<br>
+     * Note: the edges that are returned are the one that goes IN this vertex AND the edges that goes OUT of it.
      *
      * @param vertex a vertex of the graph
-     * @return a set of edges
+     * @return a collection of edges
      * @throws NullPointerException     if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained in the graph
      */
-    Set<Edge<V, W>> edgesOf(V vertex) throws NullPointerException, IllegalArgumentException;
+    Collection<Edge<V, W>> edgesOf(V vertex) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Retrieve all the edges of a particular vertex.<br>
+     * Note: the edges that are returned are the one that have this vertex as destination and another as source.
+     *
+     * @param vertex a vertex of the graph
+     * @return a collection of edges
+     * @throws NullPointerException     if the vertex is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    Collection<Edge<V, W>> getEdgesIn(V vertex) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Retrieve all the edges that goes OUT of a particular vertex.<br>
+     * Note: the edges that are returned are the one that have this vertex as source and another one as destination.
+     *
+     * @param vertex a vertex of the graph
+     * @return a collection of edges
+     * @throws NullPointerException     if the vertex is null
+     * @throws IllegalArgumentException if the vertex is not contained in the graph
+     */
+    Collection<Edge<V, W>> getEdgesOut(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Get all the vertices that are children of the vertex passed as parameter.<br>
@@ -245,34 +361,22 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * where V1 is the source of that edge.
      *
      * @param vertex the source vertex
-     * @return a set of vertices
+     * @return an array of vertices
      * @throws NullPointerException     if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained in the graph
      */
-    Set<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException;
-
-    /**
-     * This method will get all the child of the vertex selected.<br>
-     * The map created will be a {@link java.util.LinkedHashMap LinkedHashMap}<br>
-     * The order in which the vertex are iterated in the map will be from the vertex with the lowest weight to the one with the highest.
-     *
-     * @param vertex a vertex of the graph
-     * @return a map of all the child and their respective weight
-     * @throws NullPointerException     if the vertex is null
-     * @throws IllegalArgumentException if the vertex is not contained in the graph
-     */
-    Map<V, W> getChildrenAndWeight(V vertex) throws NullPointerException, IllegalArgumentException;
+    Collection<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Get all the vertices that have the vertex passed as their child.<br>
      * Basically is the opposite of {@link #getChildren(Object)}
      *
      * @param vertex a vertex of the graph
-     * @return a set of ancestors of the vertex
+     * @return an array of ancestors of the vertex
      * @throws NullPointerException     if one of the parameters is null
      * @throws IllegalArgumentException if one of the vertex is not contained in the graph
      */
-    Set<V> getAncestors(V vertex) throws NullPointerException, IllegalArgumentException;
+    Collection<V> getAncestors(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Tells the degree of all the edges that goes to this vertex.<br>
@@ -333,7 +437,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @throws NullPointerException     if one of the parameter is null (except the consumer)
      * @throws IllegalArgumentException if the vertex is not in the graph
      */
-    void visit(V source, VisitStrategy<V, W> strategy, Consumer<V> visit) throws NullPointerException, IllegalArgumentException;
+    VisitInfo<V> visit(V source, VisitStrategy<V, W> strategy, Consumer<V> visit) throws NullPointerException, IllegalArgumentException;
 
     /**
      * This method will create a new Graph that is the transposed version of the original.<br>
@@ -356,9 +460,9 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     /**
      * The strongly connected components or diconnected components of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.
      *
-     * @return a set containing the strongly connected components
+     * @return a collection containing the strongly connected components
      */
-    Set<Set<V>> stronglyConnectedComponents();
+    Collection<Collection<V>> stronglyConnectedComponents();
 
     /**
      * Get a sub-graph of the current one based on the maximum depth that is given.<br>
@@ -371,9 +475,20 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param depth  the maximum depth (must be a positive number, if >=0 a graph containing only the source is returned)
      * @return a sub-graph of the original
      * @throws NullPointerException     if the vertex is null
-     * @throws IllegalArgumentException if the vertex is null
+     * @throws IllegalArgumentException if the vertex is not contained
      */
     Graph<V, W> subGraph(V source, int depth) throws NullPointerException, IllegalArgumentException;
+
+    /**
+     * Get a sub-graph of the current one with only the vertex marked with the selected marker.<br>
+     * Each vertex will have all his edges, but only the ones with the destination marked with the same marker.<br>
+     * If the marker is null then the returning graph will have all the vertices that are not marked by any marker.<br>
+     * If the graph doesn't contain any vertex with that marker then an empty graph is returned.
+     *
+     * @param marker the marker
+     * @return a sub-graph of the current graph
+     */
+    Graph<V, W> subGraph(String marker);
 
     /**
      * Get the minimum path from the source vertex to the destination vertex.<br>
@@ -400,75 +515,4 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     // TODO maybe -> STATIC saveOnFile(orString) INSTANCE loadFromFile(orString), but need JSON parser
     // TODO maybe, but i don't think so... STATIC DISTANCE V* -> V*
-
-    /**
-     * Class used for retrieving the edges of the graph.
-     *
-     * @param <V> the vertices
-     * @param <W> the weight of the edge
-     */
-    class Edge<V, W extends Number> {
-        private final V source;
-        private final V destination;
-        private final W weight;
-
-        /**
-         * Create an final version of this object
-         *
-         * @param source      the source of the edge
-         * @param destination the destination of the edge
-         * @param weight      the weight od the edge
-         */
-        public Edge(V source, V destination, W weight) {
-            this.source = source;
-            this.destination = destination;
-            this.weight = weight;
-        }
-
-        /**
-         * The vertex where the edge goes
-         *
-         * @return the vertex
-         */
-        public V getDestination() {
-            return destination;
-        }
-
-        /**
-         * The vertex where the edge starts from
-         *
-         * @return the vertex
-         */
-        public V getSource() {
-            return source;
-        }
-
-        /**
-         * The weight of the edge
-         *
-         * @return the weight
-         */
-        public W getWeight() {
-            return weight;
-        }
-
-        @Override
-        public String toString() {
-            return "[" + source + " -> " + destination + ", " + weight + "]";
-        }
-
-        @Override
-        public int hashCode() {
-            return toString().hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            try {
-                return obj.getClass().equals(getClass()) && obj.toString().equals(toString());
-            } catch (Exception e) {
-                return false;
-            }
-        }
-    }
 }

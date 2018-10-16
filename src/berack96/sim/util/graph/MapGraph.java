@@ -2,6 +2,7 @@ package berack96.sim.util.graph;
 
 import berack96.sim.util.graph.visit.Dijkstra;
 import berack96.sim.util.graph.visit.Tarjan;
+import berack96.sim.util.graph.visit.VisitInfo;
 import berack96.sim.util.graph.visit.VisitStrategy;
 
 import java.util.*;
@@ -17,6 +18,7 @@ import java.util.function.Consumer;
  *
  * @param <V> the vertices
  * @param <W> the weight of the edges
+ * @author Berack96
  */
 public class MapGraph<V, W extends Number> implements Graph<V, W> {
 
@@ -26,6 +28,11 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
      * If an edge exist, then it's weight is returned
      */
     private final Map<V, Map<V, W>> edges = new HashMap<>();
+
+    /**
+     * Map that contains the vertex as key and all the marker as the value associated with that vertex.
+     */
+    private final Map<V, Set<String>> marked = new HashMap<>();
 
     /**
      * Need this variable for not calculating each time the SCC or the cyclic part if the graph doesn't change
@@ -48,6 +55,12 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
+    public Vertex<V> getVertex(V vertex) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
+        return new Vertex<>(this, vertex);
+    }
+
+    @Override
     public void addVertex(V vertex) throws NullPointerException {
         checkNull(vertex);
         graphChanged();
@@ -63,18 +76,18 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public void addAllVertices(Set<V> vertices) throws NullPointerException {
+    public void addAllVertices(Collection<V> vertices) throws NullPointerException {
         checkNull(vertices);
         vertices.forEach(this::addVertexIfAbsent);
     }
 
     @Override
-    public void removeVertex(V vertex) throws NullPointerException, IllegalArgumentException {
-        checkNullAndExist(vertex);
-
-        graphChanged();
-        edges.remove(vertex);
-        edges.forEach((v, map) -> map.remove(vertex));
+    public void removeVertex(V vertex) throws NullPointerException {
+        if (contains(vertex)) {
+            graphChanged();
+            edges.remove(vertex);
+            edges.forEach((v, map) -> map.remove(vertex));
+        }
     }
 
     @Override
@@ -90,6 +103,45 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
+    public void mark(V vertex, String mark) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
+        checkNull(mark);
+
+        Set<String> set = marked.computeIfAbsent(vertex, (m) -> new HashSet<>());
+        set.add(mark);
+    }
+
+    @Override
+    public void unMark(V vertex, String mark) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
+        checkNull(mark);
+        marked.get(vertex).remove(mark);
+    }
+
+    @Override
+    public void unMark(V vertex) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
+        marked.get(vertex).clear();
+    }
+
+    @Override
+    public Set<String> getMarks(V vertex) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
+        return marked.computeIfAbsent(vertex, (m) -> new HashSet<>());
+    }
+
+    @Override
+    public void unMarkAll(String mark) {
+        checkNull(mark);
+        marked.forEach((v, m) -> m.remove(mark));
+    }
+
+    @Override
+    public void unMarkAll() {
+        marked.clear();
+    }
+
+    @Override
     public W addEdge(V vertex1, V vertex2, W weight) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex1);
         checkNullAndExist(vertex2);
@@ -100,6 +152,11 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
+    public W addEdge(Edge<V, W> edge) throws NullPointerException, IllegalArgumentException {
+        return addEdge(edge.getSource(), edge.getDestination(), edge.getWeight());
+    }
+
+    @Override
     public W addEdgeAndVertices(V vertex1, V vertex2, W weight) throws NullPointerException {
         addVertexIfAbsent(vertex1);
         addVertexIfAbsent(vertex2);
@@ -107,7 +164,12 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public void addAllEdges(Set<Edge<V, W>> edges) throws NullPointerException {
+    public W addEdgeAndVertices(Edge<V, W> edge) throws NullPointerException, IllegalArgumentException {
+        return addEdgeAndVertices(edge.getSource(), edge.getDestination(), edge.getWeight());
+    }
+
+    @Override
+    public void addAllEdges(Collection<Edge<V, W>> edges) throws NullPointerException {
         edges.forEach((edge) -> addEdgeAndVertices(edge.getSource(), edge.getDestination(), edge.getWeight()));
     }
 
@@ -146,6 +208,7 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
 
     @Override
     public void removeAllEdge(V vertex) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
         removeVertex(vertex);
         addVertex(vertex);
     }
@@ -157,11 +220,8 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public boolean containsEdge(V vertex1, V vertex2) throws NullPointerException, IllegalArgumentException {
-        checkNullAndExist(vertex1);
-        checkNullAndExist(vertex2);
-
-        return edges.get(vertex1).get(vertex2) != null;
+    public boolean containsEdge(V vertex1, V vertex2) throws NullPointerException {
+        return (contains(vertex1) && contains(vertex2)) && edges.get(vertex1).get(vertex2) != null;
     }
 
     @Override
@@ -189,17 +249,31 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
+    public Collection<Edge<V, W>> getEdgesIn(V vertex) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
+        Collection<Edge<V, W>> collection = new HashSet<>();
+        edges.forEach((source, edge) -> {
+            if (edge.get(vertex) != null)
+                collection.add(new Edge<>(source, vertex, edge.get(vertex)));
+        });
+
+        return collection;
+    }
+
+    @Override
+    public Collection<Edge<V, W>> getEdgesOut(V vertex) throws NullPointerException, IllegalArgumentException {
+        checkNullAndExist(vertex);
+        Collection<Edge<V, W>> collection = new HashSet<>();
+        edges.get(vertex).forEach((dest, weight) -> collection.add(new Edge<>(vertex, dest, weight)));
+
+        return collection;
+    }
+
+    @Override
     public Set<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
 
         return new HashSet<>(edges.get(vertex).keySet());
-    }
-
-    @Override
-    public Map<V, W> getChildrenAndWeight(V vertex) throws NullPointerException, IllegalArgumentException {
-        checkNullAndExist(vertex);
-
-        return new HashMap<>(edges.get(vertex));
     }
 
     @Override
@@ -252,8 +326,8 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public void visit(V source, VisitStrategy<V, W> strategy, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
-        strategy.visit(this, source, visit);
+    public VisitInfo<V> visit(V source, VisitStrategy<V, W> strategy, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
+        return strategy.visit(this, source, visit);
     }
 
     @Override
@@ -275,7 +349,7 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public Set<Set<V>> stronglyConnectedComponents() {
+    public Collection<Collection<V>> stronglyConnectedComponents() {
         return getTarjan().getSCC();
     }
 
@@ -302,20 +376,50 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
                         vertices.add(child);
                     }
             }
+            return null;
         };
 
         strategy.visit(this, source, null);
 
         sub.addAllVertices(vertices);
         for (V vertex : vertices)
-            getChildrenAndWeight(vertex).forEach((child, weight) -> {
+            getEdgesOut(vertex).forEach((edge) -> {
                 try {
-                    sub.addEdge(vertex, child, weight);
+                    sub.addEdge(edge);
                 } catch (Exception ignored) {
                 }
             });
 
         return sub;
+    }
+
+    @Override
+    public Graph<V, W> subGraph(final String marker) {
+        final Graph<V, W> graph = new MapGraph<>();
+        final Set<V> allVertices = new HashSet<>();
+
+        marked.forEach((vertex, mark) -> {
+            if (mark.contains(marker) || (marker == null && !mark.isEmpty()))
+                allVertices.add(vertex);
+        });
+
+        if (marker == null) {
+            Collection<V> toAdd = graph.vertices();
+            toAdd.removeAll(allVertices);
+            allVertices.clear();
+            allVertices.addAll(toAdd);
+        }
+
+        graph.addAllVertices(allVertices);
+        for (V vertex : graph.vertices())
+            getEdgesOut(vertex).forEach((edge) -> {
+                try {
+                    graph.addEdge(edge);
+                } catch (Exception ignored) {
+                }
+            });
+
+        return graph;
     }
 
     @Override

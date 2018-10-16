@@ -1140,6 +1140,7 @@ public class TestGraph {
         shouldThrow(nullException, () -> vertex.addChild(null, 3));
         shouldThrow(nullException, () -> vertex.addChild(null, null));
         shouldThrow(nullException, () -> vertex.mark(null));
+        shouldThrow(nullException, () -> vertex.unMark(null));
         shouldThrow(nullException, () -> vertex.removeChild(null));
         shouldThrow(new NullPointerException(), () -> vertex.visit(null, null));
 
@@ -1184,6 +1185,13 @@ public class TestGraph {
         shouldContain(vertex.getMarks(), "ciao", "ciao2");
         shouldContain(graph.getMarks(vertex.getValue()), "ciao", "ciao2");
         vertex.unMark();
+        shouldContain(vertex.getMarks());
+        vertex.mark("cio");
+        vertex.mark(1);
+        shouldContain(vertex.getMarks(), "cio", 1);
+        vertex.unMark(1);
+        shouldContain(vertex.getMarks(), "cio");
+        vertex.unMark("cio");
         shouldContain(vertex.getMarks());
 
         vertex.removeChild("1");

@@ -32,7 +32,7 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     /**
      * Map that contains the vertex as key and all the marker as the value associated with that vertex.
      */
-    private final Map<V, Set<String>> marked = new HashMap<>();
+    private final Map<V, Set<Object>> marked = new HashMap<>();
 
     /**
      * Need this variable for not calculating each time the SCC or the cyclic part if the graph doesn't change
@@ -103,16 +103,16 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public void mark(V vertex, String mark) throws NullPointerException, IllegalArgumentException {
+    public void mark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
         checkNull(mark);
 
-        Set<String> set = marked.computeIfAbsent(vertex, (m) -> new HashSet<>());
+        Set<Object> set = marked.computeIfAbsent(vertex, (m) -> new HashSet<>());
         set.add(mark);
     }
 
     @Override
-    public void unMark(V vertex, String mark) throws NullPointerException, IllegalArgumentException {
+    public void unMark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
         checkNull(mark);
         marked.get(vertex).remove(mark);
@@ -125,13 +125,13 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public Set<String> getMarks(V vertex) throws NullPointerException, IllegalArgumentException {
+    public Set<Object> getMarks(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
         return marked.computeIfAbsent(vertex, (m) -> new HashSet<>());
     }
 
     @Override
-    public void unMarkAll(String mark) {
+    public void unMarkAll(Object mark) {
         checkNull(mark);
         marked.forEach((v, m) -> m.remove(mark));
     }
@@ -394,7 +394,7 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public Graph<V, W> subGraph(final String marker) {
+    public Graph<V, W> subGraph(final Object marker) {
         final Graph<V, W> graph = new MapGraph<>();
         final Set<V> allVertices = new HashSet<>();
 

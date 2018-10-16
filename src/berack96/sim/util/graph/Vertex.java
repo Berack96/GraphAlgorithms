@@ -57,17 +57,29 @@ public class Vertex<V> {
      *
      * @param mark the marker
      * @throws NullPointerException          if the marker is null
-     * @throws UnsupportedOperationException if the vertes is not in the graph anymore
+     * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
-    public void mark(String mark) throws NullPointerException, UnsupportedOperationException {
+    public void mark(Object mark) throws NullPointerException, UnsupportedOperationException {
         throwIfNotContained();
         graph.mark(vertex, mark);
     }
 
     /**
+     * Remove the specified mark from this vertex
+     *
+     * @param mark the marker
+     * @throws NullPointerException          if the mark is null
+     * @throws UnsupportedOperationException if the vertex is not in the graph anymore
+     */
+    public void unMark(Object mark) throws UnsupportedOperationException {
+        throwIfNotContained();
+        graph.unMark(vertex, mark);
+    }
+
+    /**
      * Remove all the marker from the vertex
      *
-     * @throws UnsupportedOperationException if the vertes is not in the graph anymore
+     * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
     public void unMark() throws UnsupportedOperationException {
         throwIfNotContained();
@@ -78,9 +90,9 @@ public class Vertex<V> {
      * Get all the marks that are associated with this vertex
      *
      * @return a set of marks
-     * @throws UnsupportedOperationException if the vertes is not in the graph anymore
+     * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
-    public Collection<String> getMarks() throws UnsupportedOperationException {
+    public Collection<Object> getMarks() throws UnsupportedOperationException {
         throwIfNotContained();
         return graph.getMarks(vertex);
     }

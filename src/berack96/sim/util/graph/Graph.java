@@ -116,7 +116,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @throws NullPointerException     if one of the param is null
      * @throws IllegalArgumentException if the vertex is not contained in the graph
      */
-    void mark(V vertex, String mark) throws NullPointerException, IllegalArgumentException;
+    void mark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Remove the selected mark from the vertex.<br>
@@ -126,7 +126,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @throws NullPointerException     if a param is null
      * @throws IllegalArgumentException if the vertex is not contained in the graph
      */
-    void unMark(V vertex, String mark) throws NullPointerException, IllegalArgumentException;
+    void unMark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Unmark the vertex selected.<br>
@@ -148,7 +148,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @throws NullPointerException     if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained in the graph
      */
-    Collection<String> getMarks(V vertex) throws NullPointerException, IllegalArgumentException;
+    Collection<Object> getMarks(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Remove the selected mark from all the vertices
@@ -156,7 +156,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param mark the mark to remove
      * @throws NullPointerException if the mark is null
      */
-    void unMarkAll(String mark) throws NullPointerException;
+    void unMarkAll(Object mark) throws NullPointerException;
 
     /**
      * Remove all the marker to all the vertex.<br>
@@ -488,7 +488,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param marker the marker
      * @return a sub-graph of the current graph
      */
-    Graph<V, W> subGraph(String marker);
+    Graph<V, W> subGraph(Object marker);
 
     /**
      * Get the minimum path from the source vertex to the destination vertex.<br>

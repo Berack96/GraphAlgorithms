@@ -15,7 +15,7 @@ import java.util.function.Consumer;
  * @param <V> the vertex
  * @author Berack96
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class Vertex<V> {
 
     public static final String REMOVED = "The vertex is no longer in the graph";
@@ -240,7 +240,7 @@ public class Vertex<V> {
      * @throws NullPointerException          if the strategy is null
      * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
-    public VisitInfo<V> visit(final VisitStrategy strategy, final Consumer<V> visit) throws NullPointerException, UnsupportedOperationException {
+	public VisitInfo<V> visit(final VisitStrategy strategy, final Consumer<V> visit) throws NullPointerException, UnsupportedOperationException {
         throwIfNotContained();
         return graph.visit(vertex, (VisitStrategy<V, Number>) strategy, visit);
     }

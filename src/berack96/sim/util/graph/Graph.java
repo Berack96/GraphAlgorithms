@@ -139,9 +139,22 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     void unMark(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
+     * Get all the vertices that are marked with the specific mark passed.<br>
+     * If there aren't vertices with that mark then it is returned an empty set.<br>
+     * Note: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
+     *
+     * @param mark the mark
+     * @return all the vertices that are marked with that specific mark
+     * @throws NullPointerException     if the mark is null
+     */
+    Collection<V> getMarkedWith(Object mark) throws NullPointerException;
+    
+    /**
      * Get all the marker of this vertex.<br>
      * If the vertex doesn't have any mark, then it will return an empty set.<br>
-     * Note: this set is linked to the marked vertex, so any changes to the set returned are reflected to the graph.
+     * Note: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @param vertex the vertex
      * @return all the mark to the vertex or an empty collection if none
@@ -307,7 +320,8 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     /**
      * Get all the vertices in the graph.<br>
      * If the graph doesn't contains vertices, it'll return an empty collection.<br>
-     * Note that this collection is completely different the object used for the vertices, so any modification to this collection will not change the graph.
+     * Note: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @return an array that include all the vertices
      */
@@ -316,7 +330,8 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     /**
      * Get all the edges in the graph.<br>
      * If the graph doesn't contains edges, it'll return an empty collection.<br>
-     * Note that this collection is completely different than the object used for the edges, so any modification to this collection will not change the graph.
+     * Note: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @return a collection that include all the edges
      */
@@ -324,7 +339,9 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     /**
      * Retrieve all the edges of a particular vertex.<br>
-     * Note: the edges that are returned are the one that goes IN this vertex AND the edges that goes OUT of it.
+     * Note: the edges that are returned are the one that goes IN this vertex AND the edges that goes OUT of it.<br>
+     * Note2: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @param vertex a vertex of the graph
      * @return a collection of edges
@@ -335,7 +352,9 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     /**
      * Retrieve all the edges of a particular vertex.<br>
-     * Note: the edges that are returned are the one that have this vertex as destination and another as source.
+     * Note: the edges that are returned are the one that have this vertex as destination and another as source.<br>
+     * Note2: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @param vertex a vertex of the graph
      * @return a collection of edges
@@ -346,7 +365,9 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     /**
      * Retrieve all the edges that goes OUT of a particular vertex.<br>
-     * Note: the edges that are returned are the one that have this vertex as source and another one as destination.
+     * Note: the edges that are returned are the one that have this vertex as source and another one as destination.<br>
+     * Note2: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @param vertex a vertex of the graph
      * @return a collection of edges
@@ -358,7 +379,9 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     /**
      * Get all the vertices that are children of the vertex passed as parameter.<br>
      * The vertices V(0-N) that are 'children' of a vertex V1, are all the vertices that have an edge
-     * where V1 is the source of that edge.
+     * where V1 is the source of that edge.<br>
+     * Note: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @param vertex the source vertex
      * @return an array of vertices
@@ -369,7 +392,9 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     /**
      * Get all the vertices that have the vertex passed as their child.<br>
-     * Basically is the opposite of {@link #getChildren(Object)}
+     * Basically is the opposite of {@link #getChildren(Object)}<br>
+     * Note: depending on the implementation, modifying the returned collection<br>
+     * could affect the graph behavior and the changes could be reflected to the graph.
      *
      * @param vertex a vertex of the graph
      * @return an array of ancestors of the vertex
@@ -442,7 +467,8 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     /**
      * This method will create a new Graph that is the transposed version of the original.<br>
      * At the end of this method the new graph will have all the edges inverted in orientation.<br>
-     * Example: if the graph G contains (V1, V2, V3) as vertex, and (V1->V2, V3->V2) as edges, the transpose graph G' will contain (V1, V2, V3) as vertex, and (V2->V1, V2->V3) as edges.
+     * Example: if the graph G contains (V1, V2, V3) as vertex, and (V1->V2, V3->V2) as edges,
+     * the transpose graph G' will contain (V1, V2, V3) as vertex, and (V2->V1, V2->V3) as edges.
      *
      * @return a transposed graph of this instance
      */
@@ -450,7 +476,8 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     /**
      * If the current graph is a DAG, it returns a topological sort of this graph.<br>
-     * A topological ordering of a graph is a linear ordering of its vertices such that for every directed edge (V1, V2) from vertex V1 to vertex V2, V2 comes before V1 in the ordering.
+     * A topological ordering of a graph is a linear ordering of its vertices such that for
+     * every directed edge (V1, V2) from vertex V1 to vertex V2, V2 comes before V1 in the ordering.
      *
      * @return an array containing the topological order of the vertices
      * @throws UnsupportedOperationException if the graph is not a DAG (see {@link #isDAG()})
@@ -458,7 +485,8 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     List<V> topologicalSort() throws UnsupportedOperationException;
 
     /**
-     * The strongly connected components or diconnected components of an arbitrary directed graph form a partition into subgraphs that are themselves strongly connected.
+     * The strongly connected components or disconnected components of an arbitrary directed graph
+     * form a partition into subgraphs that are themselves strongly connected.
      *
      * @return a collection containing the strongly connected components
      */

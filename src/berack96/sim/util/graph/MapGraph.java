@@ -124,6 +124,18 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         marked.get(vertex).clear();
     }
 
+	@Override
+	public Collection<V> getMarkedWith(Object mark) throws NullPointerException {
+		checkNull(mark);
+		Collection<V> ret = new HashSet<V>();
+		marked.forEach((v, set) -> {
+			if(set.contains(mark))
+				ret.add(v);
+		});
+		
+		return ret;
+	}
+
     @Override
     public Set<Object> getMarks(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);

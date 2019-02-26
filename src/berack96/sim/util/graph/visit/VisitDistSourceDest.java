@@ -25,5 +25,5 @@ public interface VisitDistSourceDest<V, W extends Number> extends VisitStrategy<
      * @throws NullPointerException     if one of the vertex is null
      * @throws IllegalArgumentException if one of the vertex is not contained in the graph
      */
-    List<Edge<V, W>> distance(Graph graph, V source, V destination) throws NullPointerException, IllegalArgumentException;
+    List<Edge<V, W>> distance(Graph<V, W> graph, V source, V destination) throws NullPointerException, IllegalArgumentException;
 }

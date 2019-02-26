@@ -32,12 +32,12 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
     public VisitInfo<V> visit(Graph<V, W> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
         VisitInfo<V> info = new VisitInfo<>(source);
         Queue<QueueEntry> queue = new PriorityQueue<>();
-        Map<V, Integer> dist = new HashMap<>();
+        Map<V, Double> dist = new HashMap<>();
         Map<V, V> prev = new HashMap<>();
 
         this.source = source;
-        dist.put(source, 0);                // Initialization
-        queue.add(new QueueEntry(source, 0));
+        dist.put(source, 0.0);                // Initialization
+        queue.add(new QueueEntry(source, 0.0));
 
         while (!queue.isEmpty()) {                      // The main loop
             QueueEntry u = queue.poll();                    // Remove and return best vertex
@@ -49,8 +49,8 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
             graph.getEdgesOut(u.entry).forEach((edge) -> {
                 V child = edge.getDestination();
                 info.setDiscovered(child);
-                int alt = dist.get(u.entry) + edge.getWeight().intValue();
-                Integer distCurrent = dist.get(child);
+                double alt = dist.get(u.entry) + edge.getWeight().doubleValue();
+                Double distCurrent = dist.get(child);
                 if (distCurrent == null || alt < distCurrent) {
                     dist.put(child, alt);
                     prev.put(child, u.entry);
@@ -83,14 +83,15 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
 
     private class QueueEntry implements Comparable<QueueEntry> {
         final V entry;
-        final Integer weight;
+        final Double weight;
 
-        QueueEntry(V entry, Integer weight) {
+        QueueEntry(V entry, Double weight) {
             this.entry = entry;
             this.weight = weight;
         }
 
-        @Override
+        @SuppressWarnings("unchecked")
+		@Override
         public boolean equals(Object obj) {
             try {
                 return ((QueueEntry) obj).entry.equals(entry);
@@ -101,7 +102,8 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
 
         @Override
         public int compareTo(QueueEntry queueEntry) {
-            return this.weight - queueEntry.weight;
+        	double ret = this.weight - queueEntry.weight;
+            return ret==0? 0: ret<0? -1:1;
         }
     }
 }

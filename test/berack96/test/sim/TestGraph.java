@@ -918,6 +918,7 @@ public class TestGraph {
         shouldThrow(nullException, () -> graph.unMark("1", null));
         shouldThrow(nullException, () -> graph.unMark(null, "blue"));
         shouldThrow(nullException, () -> graph.unMarkAll(null));
+        shouldThrow(nullException, () -> graph.getMarkedWith(null));
 
         shouldThrow(notException, () -> graph.mark("324", "yellow"));
         shouldThrow(notException, () -> graph.unMark("32423"));
@@ -966,30 +967,54 @@ public class TestGraph {
         graph.mark("2", "mark");
         graph.mark("3", "mark2");
         graph.mark("1", "mark2");
-        shouldContain(graph.getMarks("1"), "mark", "mark2");
+        graph.mark("1", 3);
+        shouldContain(graph.getMarks("1"), "mark", "mark2", 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"), "mark2");
+        shouldContain(graph.getMarkedWith("mark"), "2", "1");
+        shouldContain(graph.getMarkedWith("mark2"), "1", "3");
+        shouldContain(graph.getMarkedWith(3), "1");
 
         graph.unMark("1", "mark");
-        shouldContain(graph.getMarks("1"), "mark2");
+        shouldContain(graph.getMarks("1"), "mark2", 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"), "mark2");
+        shouldContain(graph.getMarkedWith("mark"), "2");
+        shouldContain(graph.getMarkedWith("mark2"), "1", "3");
+        shouldContain(graph.getMarkedWith(3), "1");
 
         graph.unMarkAll("mark2");
-        shouldContain(graph.getMarks("1"));
+        shouldContain(graph.getMarks("1"), 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"));
-
+        shouldContain(graph.getMarkedWith("mark"), "2");
+        shouldContain(graph.getMarkedWith("mark2"));
+        shouldContain(graph.getMarkedWith(3), "1");
+        
         graph.unMark("1", "mark");
         graph.unMark("2", "mark2");
-        shouldContain(graph.getMarks("1"));
+        shouldContain(graph.getMarks("1"), 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"));
+        shouldContain(graph.getMarkedWith("mark"), "2");
+        shouldContain(graph.getMarkedWith("mark2"));
+        shouldContain(graph.getMarkedWith(3), "1");
 
         graph.unMark("2", "mark");
+        shouldContain(graph.getMarks("1"), 3);
+        shouldContain(graph.getMarks("2"));
+        shouldContain(graph.getMarks("3"));
+        shouldContain(graph.getMarkedWith("mark"));
+        shouldContain(graph.getMarkedWith("mark2"));
+        shouldContain(graph.getMarkedWith(3), "1");
+        
+        graph.unMarkAll(3);
         shouldContain(graph.getMarks("1"));
         shouldContain(graph.getMarks("2"));
         shouldContain(graph.getMarks("3"));
+        shouldContain(graph.getMarkedWith("mark"));
+        shouldContain(graph.getMarkedWith("mark2"));
+        shouldContain(graph.getMarkedWith(3));
     }
 
     @Test

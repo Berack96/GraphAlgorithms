@@ -54,7 +54,8 @@ public abstract class EdgeListener<V, W extends Number> implements GraphListener
                 VertexComponent<V> source = componentPressed.get();
                 VertexComponent<V> destination = graphPanel.getVertexAt(e.getPoint());
 
-                if (!graphPanel.getGraph().containsEdge(source.vertex.getValue(), destination.vertex.getValue()))
+                if (!graphPanel.getGraph().containsEdge(source.vertex.getValue(), destination.vertex.getValue())
+                	&& !source.vertex.equals(destination.vertex))
                     graphPanel.addEdge(source, destination, buildNewEdge(source.vertex, destination.vertex));
             } catch (Exception ignore) {
             }
@@ -78,12 +79,11 @@ public abstract class EdgeListener<V, W extends Number> implements GraphListener
     public void keyPressed(KeyEvent e) {
         if (edge.get() != null && Character.isDigit(e.getKeyChar())) {
             string.append(e.getKeyChar());
-            if (!edge.get().source.equals(edge.get().destination))
-	            try {
-	                graphPanel.modEdge(edge.get().source, edge.get().destination, buildEdgeFrom(string.toString()));
-	                graphPanel.repaint();
-	            } catch (Exception ignored) {
-	            }
+            try {
+                graphPanel.modEdge(edge.get().source, edge.get().destination, buildEdgeFrom(string.toString()));
+                graphPanel.repaint();
+            } catch (Exception ignored) {
+            }
         } else {
         	
         	try {

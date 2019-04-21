@@ -30,9 +30,11 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     private final Map<V, Map<V, W>> edges = new HashMap<>();
 
     /**
-     * Map that contains the vertex as key and all the marker as the value associated with that vertex.
+     * Map that contains the marker as key and a set of all the vertices that has it as the value.<br>
+     * This map is build like this for performance in creating the marker for multiple vertices.<br>
+     * If you flip the parameters (object and set) then has more performance over the single vertex.
      */
-    private final Map<V, Set<Object>> marked = new HashMap<>();
+    private final Map<Object, Set<V>> markers = new HashMap<>();
 
     /**
      * Need this variable for not calculating each time the SCC or the cyclic part if the graph doesn't change
@@ -42,7 +44,7 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     /**
      * Need this variable for not calculating each time the distance from a vertex to all his destinations if the graph doesn't change
      */
-    private Map<V, Dijkstra<V, W>> dijkstra = null;
+    private Map<V, Dijkstra<V, W>> dijkstra = new HashMap<>();
 
     @Override
     public boolean isCyclic() {
@@ -63,8 +65,8 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     @Override
     public void addVertex(V vertex) throws NullPointerException {
         checkNull(vertex);
-        graphChanged();
         edges.put(vertex, new HashMap<>());
+        graphChanged();
     }
 
     @Override
@@ -84,16 +86,18 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     @Override
     public void removeVertex(V vertex) throws NullPointerException {
         if (contains(vertex)) {
-            graphChanged();
             edges.remove(vertex);
             edges.forEach((v, map) -> map.remove(vertex));
+            markers.forEach((mark, set) -> set.remove(vertex));
+            graphChanged();
         }
     }
 
     @Override
     public void removeAllVertex() {
-        graphChanged();
         edges.clear();
+        markers.clear();
+        graphChanged();
     }
 
     @Override
@@ -107,50 +111,51 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         checkNullAndExist(vertex);
         checkNull(mark);
 
-        Set<Object> set = marked.computeIfAbsent(vertex, (m) -> new HashSet<>());
-        set.add(mark);
+        Set<V> set = markers.computeIfAbsent(mark, (v) -> new HashSet<>());
+        set.add(vertex);
     }
 
     @Override
     public void unMark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
         checkNull(mark);
-        marked.get(vertex).remove(mark);
+        markers.get(mark).remove(vertex);
     }
 
     @Override
     public void unMark(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
-        marked.get(vertex).clear();
+        markers.forEach( (mark, set) -> set.remove(vertex) );
     }
 
 	@Override
 	public Collection<V> getMarkedWith(Object mark) throws NullPointerException {
 		checkNull(mark);
-		Collection<V> ret = new HashSet<V>();
-		marked.forEach((v, set) -> {
-			if(set.contains(mark))
-				ret.add(v);
-		});
-		
-		return ret;
+		return markers.computeIfAbsent(mark, (v) -> new HashSet<>());
 	}
 
     @Override
-    public Set<Object> getMarks(V vertex) throws NullPointerException, IllegalArgumentException {
+    public Collection<Object> getMarks(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
-        return marked.computeIfAbsent(vertex, (m) -> new HashSet<>());
+        
+        Collection<Object> marks = new HashSet<>();
+        markers.forEach( (mark, set) -> {
+        	if (set.contains(vertex))
+        		marks.add(mark);
+        });
+        
+        return marks;
     }
 
     @Override
     public void unMarkAll(Object mark) {
         checkNull(mark);
-        marked.forEach((v, m) -> m.remove(mark));
+        markers.remove(mark);
     }
 
     @Override
     public void unMarkAll() {
-        marked.clear();
+        markers.clear();
     }
 
     @Override
@@ -159,8 +164,9 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         checkNullAndExist(vertex2);
         checkNull(weight);
 
+        W old = edges.get(vertex1).put(vertex2, weight);
         graphChanged();
-        return edges.get(vertex1).put(vertex2, weight);
+        return old;
     }
 
     @Override
@@ -198,24 +204,24 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         checkNullAndExist(vertex1);
         checkNullAndExist(vertex2);
 
-        graphChanged();
         edges.get(vertex1).remove(vertex2);
+        graphChanged();
     }
 
     @Override
     public void removeAllInEdge(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
 
-        graphChanged();
         edges.forEach((v, map) -> map.remove(vertex));
+        graphChanged();
     }
 
     @Override
     public void removeAllOutEdge(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
 
-        graphChanged();
         edges.put(vertex, new HashMap<>());
+        graphChanged();
     }
 
     @Override
@@ -227,8 +233,8 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
 
     @Override
     public void removeAllEdge() {
-        graphChanged();
         edges.forEach((v, map) -> map.clear());
+        graphChanged();
     }
 
     @Override
@@ -237,19 +243,19 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public Set<V> vertices() {
+    public Collection<V> vertices() {
         return new HashSet<>(edges.keySet());
     }
 
     @Override
-    public Set<Edge<V, W>> edges() {
+    public Collection<Edge<V, W>> edges() {
         Set<Edge<V, W>> allEdges = new HashSet<>();
         edges.forEach((source, map) -> map.forEach((destination, weight) -> allEdges.add(new Edge<>(source, destination, weight))));
         return allEdges;
     }
 
     @Override
-    public Set<Edge<V, W>> edgesOf(V vertex) throws NullPointerException, IllegalArgumentException {
+    public Collection<Edge<V, W>> edgesOf(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
 
         Set<Edge<V, W>> set = new HashSet<>();
@@ -282,14 +288,14 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public Set<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException {
+    public Collection<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
 
         return new HashSet<>(edges.get(vertex).keySet());
     }
 
     @Override
-    public Set<V> getAncestors(V vertex) throws NullPointerException, IllegalArgumentException {
+    public Collection<V> getAncestors(V vertex) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(vertex);
 
         Set<V> set = new HashSet<>();
@@ -406,32 +412,36 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     }
 
     @Override
-    public Graph<V, W> subGraph(final Object marker) {
-        final Graph<V, W> graph = new MapGraph<>();
+    public Graph<V, W> subGraph(final Object...marker) {
+        final Graph<V, W> sub = new MapGraph<>();
         final Set<V> allVertices = new HashSet<>();
+        final Set<Object> allMarkers = new HashSet<>();
+        
+        if (marker != null)
+        	for (Object mark: marker)
+        		allMarkers.add(mark);
 
-        marked.forEach((vertex, mark) -> {
-            if (mark.contains(marker) || (marker == null && !mark.isEmpty()))
-                allVertices.add(vertex);
+        markers.forEach( (mark, set) -> {
+        	if (marker == null || allMarkers.contains(mark))
+        		allVertices.addAll(set);
         });
-
+        
         if (marker == null) {
-            Collection<V> toAdd = graph.vertices();
+            Collection<V> toAdd = vertices();
             toAdd.removeAll(allVertices);
             allVertices.clear();
             allVertices.addAll(toAdd);
         }
 
-        graph.addAllVertices(allVertices);
-        for (V vertex : graph.vertices())
-            getEdgesOut(vertex).forEach((edge) -> {
+        sub.addAllVertices(allVertices);
+        for (V vertex : sub.vertices())
+            edges.get(vertex).forEach( (dest, weight) -> {
                 try {
-                    graph.addEdge(edge);
-                } catch (Exception ignored) {
-                }
+                    sub.addEdge(vertex, dest, weight);
+                } catch (Exception ignored) {}
             });
 
-        return graph;
+        return sub;
     }
 
     @Override
@@ -439,7 +449,7 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         checkNullAndExist(source);
         checkNullAndExist(destination);
 
-        Dijkstra<V, W> dijkstra = getDijkstra(source);
+        Dijkstra<V, W> dijkstra = getDijkstra(source);	/* Cached */
         List<Edge<V, W>> path = dijkstra.getLastDistance().get(destination);
         if (path == null)
             throw new UnsupportedOperationException(NOT_CONNECTED);
@@ -449,7 +459,7 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
     @Override
     public Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException {
         checkNullAndExist(source);
-        return new HashMap<>(getDijkstra(source).getLastDistance());
+        return new HashMap<>(getDijkstra(source).getLastDistance());	/* Cached */
     }
 
     @Override
@@ -459,16 +469,20 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
 
 
     /**
-     * Simple function that set all the memory vars at null if the graph changed
+     * Simple function that reset all the caching variables if the graph changed
      */
     private void graphChanged() {
         tarjan = null;
-        dijkstra = null;
+        dijkstra.clear();
     }
 
+    /**
+     * Simple function that return the result of the Dijkstra visit, with the starting point as source.<br>
+     * It also cache it, so multiple call will return always the same value unless the graph has changed.
+     * @param source the source of the visit
+     * @return the complete visit
+     */
     private Dijkstra<V, W> getDijkstra(V source) {
-        if (dijkstra == null)
-            dijkstra = new HashMap<>();
         if (dijkstra.get(source) == null) {
             Dijkstra<V, W> newDijkstra = new Dijkstra<>();
             newDijkstra.visit(this, source, null);
@@ -478,6 +492,11 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         return dijkstra.get(source);
     }
 
+    /**
+     * Simple function that return the result of the Tarjan visit.<br>
+     * It also cache it, so multiple call will return always the same value unless the graph has changed.
+     * @return the tarjan visit
+     */
     private Tarjan<V, W> getTarjan() {
         if (tarjan == null) {
             tarjan = new Tarjan<>();
@@ -487,11 +506,21 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         return tarjan;
     }
 
+    /**
+     * Test if the object passed is null.
+     * If it is throw an exception.
+     * @param object the object to test
+     */
     private void checkNull(Object object) {
         if (object == null)
             throw new NullPointerException(PARAM_NULL);
     }
 
+    /**
+     * Check if the vertex passed is null and if exist in the graph.
+     * If not then throws eventual exception
+     * @param vertex the vertex to test
+     */
     private void checkNullAndExist(V vertex) {
         checkNull(vertex);
         if (!edges.containsKey(vertex))

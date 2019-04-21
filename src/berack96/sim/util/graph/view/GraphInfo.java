@@ -1,16 +1,33 @@
 package berack96.sim.util.graph.view;
 
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.GridLayout;
+import java.awt.event.ItemEvent;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.border.BevelBorder;
+
+import com.google.gson.Gson;
+
 import berack96.sim.util.graph.Graph;
 import berack96.sim.util.graph.view.edge.EdgeListener;
 import berack96.sim.util.graph.view.vertex.VertexListener;
 import berack96.sim.util.graph.visit.VisitStrategy;
-
-import javax.swing.*;
-import javax.swing.border.BevelBorder;
-import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.util.*;
-import java.util.List;
 
 public class GraphInfo<V, W extends Number> extends JPanel {
 
@@ -122,10 +139,40 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         panelVertex.setOpaque(false);
         panelVertex.setLayout(new GridLayout(components.size()/2, 2, 2*2, 2*2));
         components.forEach(panelVertex::add);
+        components.clear();
 
-        /* Save/Load 
-        JPanel panelSave = new JPanel(); */
-
+        /* SAVE/LOAD */
+        /*
+        JTextField fileText = new JTextField();
+        JButton saveB = new JButton("Save");
+        saveB.addActionListener(a -> {
+        	try {
+				Graph.save(graphPanel.getGraph(), fileText.getText());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+        });
+        JButton loadB = new JButton("Load");
+        loadB.addActionListener(a -> {
+        	try {
+        		Graph<V, W> graph = graphPanel.getGraph();
+				Graph.load((Graph<Object, Number>) graph, fileText.getText());
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+        });
+        components.add(new JLabel("File to save/load: "));
+        components.add(fileText);
+        components.add(saveB);
+        components.add(loadB);
+        
+        JPanel panelSave = new JPanel();
+        panelSave.setOpaque(false);
+        panelSave.setBorder(BorderFactory.createLineBorder(Color.RED));
+        panelSave.setLayout(new GridLayout(components.size()/2, 2, 2*2, 2*2));
+        components.forEach(panelSave::add);
+        components.clear();
+        */
 
         /* ADDING COMPONENTS */
         this.setBackground(Color.LIGHT_GRAY);
@@ -135,7 +182,7 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         this.add(panelDescription);
         this.add(panelInfo);
         this.add(panelVertex);
-        this.add(Box.createVerticalGlue());
+        /*this.add(panelSave);*/
 
         modVertex.doClick();
 

@@ -1,12 +1,18 @@
 package berack96.sim.util.graph;
 
-import berack96.sim.util.graph.visit.VisitInfo;
-import berack96.sim.util.graph.visit.VisitStrategy;
-
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+
+import com.google.gson.Gson;
+
+import berack96.sim.util.graph.visit.VisitInfo;
+import berack96.sim.util.graph.visit.VisitStrategy;
 
 /**
  * An interface for the graphs.<br>
@@ -508,15 +514,15 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     Graph<V, W> subGraph(V source, int depth) throws NullPointerException, IllegalArgumentException;
 
     /**
-     * Get a sub-graph of the current one with only the vertex marked with the selected marker.<br>
+     * Get a sub-graph of the current one with only the vertex marked with the selected markers.<br>
      * Each vertex will have all his edges, but only the ones with the destination marked with the same marker.<br>
      * If the marker is null then the returning graph will have all the vertices that are not marked by any marker.<br>
      * If the graph doesn't contain any vertex with that marker then an empty graph is returned.
      *
-     * @param marker the marker
+     * @param marker one or more markers
      * @return a sub-graph of the current graph
      */
-    Graph<V, W> subGraph(Object marker);
+    Graph<V, W> subGraph(Object...marker);
 
     /**
      * Get the minimum path from the source vertex to the destination vertex.<br>
@@ -541,6 +547,35 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      */
     Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException;
 
+    /*
+    static void save(Graph<?, ?> graph, String file) throws IOException {
+    	Map<String, Object> map = new HashMap<>();
+    	map.put("vertices", graph.vertices());
+    	map.put("edges", graph.edges());
+    	
+    	Gson gson = new Gson();
+    	FileWriter writer = new FileWriter(file);
+    	writer.write(gson.toJson(map));
+    	writer.close();
+    }
+    
+    @SuppressWarnings("unchecked")
+    static void load(Graph<Object, Number> graph, String file) throws IOException {
+    	Gson gson = new Gson();
+    	FileReader reader = new FileReader(file);
+    	StringBuilder fileContent = new StringBuilder();
+    	int c;
+    	
+    	while((c = reader.read()) != -1)
+    		fileContent.append(c);
+    	reader.close();
+    	
+    	Map<String, Object> map = gson.fromJson(fileContent.toString(), Map.class);
+    	graph.addAllVertices((Collection<Object>)map.get("vertices"));
+    	graph.addAllEdges((Collection<Edge<Object, Number>>)map.get("edges"));
+    }
+    */
+    
     // TODO maybe -> STATIC saveOnFile(orString) INSTANCE loadFromFile(orString), but need JSON parser
     // TODO maybe, but i don't think so... STATIC DISTANCE V* -> V*
 }

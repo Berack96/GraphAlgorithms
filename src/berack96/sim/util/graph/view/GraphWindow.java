@@ -50,7 +50,6 @@ public class GraphWindow<V, W extends Number> extends JFrame {
 
         this.infoPanel = new GraphInfo<>(graphPanel, vListener, eListener, strats);
         this.graphPanel = graphPanel;
-
         this.add(infoPanel, BorderLayout.EAST);
         this.add(graphPanel);
     }

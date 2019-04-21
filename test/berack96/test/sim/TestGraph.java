@@ -1022,11 +1022,11 @@ public class TestGraph {
         /*
          * This graph should be like this
          *
-         * 1  ->  2  <-  6
-         *               ^
-         * |      |      |
+         * 1  ->  2  <-  6      7
+         *               ^      ^
+         * |      |      |      |
          * v      v
-         * 3  <-  5  ->  4
+         * 3  <-  5  ->  4      8
          */
 
         graph.addVertexIfAbsent("1");
@@ -1035,6 +1035,8 @@ public class TestGraph {
         graph.addVertexIfAbsent("4");
         graph.addVertexIfAbsent("5");
         graph.addVertexIfAbsent("6");
+        graph.addVertexIfAbsent("7");
+        graph.addVertexIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -1043,6 +1045,7 @@ public class TestGraph {
         graph.addEdge("5", "3", 2);
         graph.addEdge("5", "4", 5);
         graph.addEdge("6", "2", 2);
+        graph.addEdge("8", "7", 9);
 
         graph.mark("1", "blue");
         graph.mark("3", "blue");
@@ -1104,14 +1107,14 @@ public class TestGraph {
 
         /* MARKED */
         sub = graph.subGraph("z");
-        shouldContain(sub.vertices(), "1", "2", "5", "4");
+        shouldContain(sub.vertices(), "1", "2", "4", "5");
         shouldContain(sub.edges(),
                 new Edge<>("1", "2", 1),
                 new Edge<>("2", "5", 4),
                 new Edge<>("5", "4", 5));
 
         sub = graph.subGraph("circle");
-        shouldContain(sub.vertices(), "2", "5", "4", "6");
+        shouldContain(sub.vertices(), "2", "4", "5", "6");
         shouldContain(sub.edges(),
                 new Edge<>("2", "5", 4),
                 new Edge<>("4", "6", 6),
@@ -1129,6 +1132,21 @@ public class TestGraph {
         shouldContain(sub.edges(),
                 new Edge<>("4", "6", 6),
                 new Edge<>("6", "2", 2));
+        
+        sub = graph.subGraph("blue", "circle");
+        shouldContain(sub.vertices(), "1", "2", "3", "4", "5", "6");
+        shouldContain(sub.edges(),
+                new Edge<>("1", "2", 1),
+                new Edge<>("1", "3", 1),
+                new Edge<>("2", "5", 4),
+                new Edge<>("4", "6", 6),
+                new Edge<>("5", "3", 2),
+                new Edge<>("5", "4", 5),
+                new Edge<>("6", "2", 2));
+        
+        sub = graph.subGraph(null);
+        shouldContain(sub.vertices(), "7", "8");
+        shouldContain(sub.edges(), new Edge<>("8", "7", 9));
     }
 
     @Test

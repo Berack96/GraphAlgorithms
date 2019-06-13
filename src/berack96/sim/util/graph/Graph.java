@@ -4,7 +4,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -548,13 +547,11 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException;
 
     static void save(Graph<?, ?> graph, String file) throws IOException {
-    	Map<String, Object> map = new HashMap<>();
-    	map.put("vertices", graph.vertices());
-    	map.put("edges", graph.edges());
-    	
+    	GraphSaveStructure<?, ?> save = new GraphSaveStructure<>(graph);
     	Gson gson = new Gson();
     	FileWriter writer = new FileWriter(file);
-    	writer.write(gson.toJson(map));
+    	
+    	writer.write(gson.toJson(save));
     	writer.close();
     }
     
@@ -570,15 +567,21 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     	while((c = reader.read()) != -1)
     		fileContent.append((char)c);
     	reader.close();
-    	Map<String, Object> map = gson.fromJson(fileContent.toString(), Map.class);
+    	GraphSaveStructure<V, W> save = gson.fromJson(fileContent.toString(), GraphSaveStructure.class);
     	
-    	Collection<V> vertices = (Collection<V>)map.get("vertices");
-		graph.addAllVertices(vertices);
-    	
-    	Collection<Map<String, Object>>collection = (Collection<Map<String, Object>>)map.get("edges");
-    	for (Map<String, Object> edge : collection) {
-    		graph.addEdge((V) edge.get("source"), (V) edge.get("destination"), (W) edge.get("weight"));
+		graph.addAllVertices(save.vertices);
+    	graph.addAllEdges(save.edges);
+    }
+    
+    class GraphSaveStructure<V, W extends Number> {
+    	public GraphSaveStructure() {}
+    	protected GraphSaveStructure(Graph<V, W> graph) {
+    		vertices = graph.vertices();
+    		edges = graph.edges();
     	}
+    	
+    	public Collection<V> vertices;
+    	public Collection<Edge<V, W>> edges;
     }
     
     // TODO maybe -> STATIC saveOnFile(orString) INSTANCE loadFromFile(orString), but need JSON parser

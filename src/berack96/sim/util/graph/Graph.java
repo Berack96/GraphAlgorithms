@@ -547,7 +547,6 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      */
     Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException;
 
-    /*
     static void save(Graph<?, ?> graph, String file) throws IOException {
     	Map<String, Object> map = new HashMap<>();
     	map.put("vertices", graph.vertices());
@@ -560,21 +559,27 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     }
     
     @SuppressWarnings("unchecked")
-    static void load(Graph<Object, Number> graph, String file) throws IOException {
+    static <V, W extends Number> void load(Graph<V, W> graph, String file) throws IOException {
+    	graph.removeAllVertex();
+    	
     	Gson gson = new Gson();
     	FileReader reader = new FileReader(file);
     	StringBuilder fileContent = new StringBuilder();
     	int c;
     	
     	while((c = reader.read()) != -1)
-    		fileContent.append(c);
+    		fileContent.append((char)c);
     	reader.close();
-    	
     	Map<String, Object> map = gson.fromJson(fileContent.toString(), Map.class);
-    	graph.addAllVertices((Collection<Object>)map.get("vertices"));
-    	graph.addAllEdges((Collection<Edge<Object, Number>>)map.get("edges"));
+    	
+    	Collection<V> vertices = (Collection<V>)map.get("vertices");
+		graph.addAllVertices(vertices);
+    	
+    	Collection<Map<String, Object>>collection = (Collection<Map<String, Object>>)map.get("edges");
+    	for (Map<String, Object> edge : collection) {
+    		graph.addEdge((V) edge.get("source"), (V) edge.get("destination"), (W) edge.get("weight"));
+    	}
     }
-    */
     
     // TODO maybe -> STATIC saveOnFile(orString) INSTANCE loadFromFile(orString), but need JSON parser
     // TODO maybe, but i don't think so... STATIC DISTANCE V* -> V*

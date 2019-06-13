@@ -1,5 +1,29 @@
 package berack96.test.sim;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import berack96.sim.util.graph.Edge;
 import berack96.sim.util.graph.Graph;
 import berack96.sim.util.graph.MapGraph;
@@ -7,26 +31,44 @@ import berack96.sim.util.graph.Vertex;
 import berack96.sim.util.graph.visit.BFS;
 import berack96.sim.util.graph.visit.DFS;
 import berack96.sim.util.graph.visit.VisitInfo;
-import org.junit.Before;
-import org.junit.Test;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static org.junit.Assert.*;
-
+@SuppressWarnings("deprecation")
 public class TestGraph {
 
     private Graph<String, Integer> graph;
-
+    
+    private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    
+    private final String encoding = "UTF-8";
     private final Exception nullException = new NullPointerException(Graph.PARAM_NULL);
     private final Exception notException = new IllegalArgumentException(Graph.VERTEX_NOT_CONTAINED);
     private final Exception unsuppException = new UnsupportedOperationException(Vertex.REMOVED);
 
+    
     @Before
     public void before() {
         // Change here the instance for changing all the test for that particular class
         graph = new MapGraph<>();
+
+        PrintStream p = null;
+        try {
+			p = new PrintStream(bytes, true, encoding);
+	        System.setErr(p);
+	        System.setOut(p);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    @After
+    public void after() {
+    	try {
+			String printed = bytes.toString(encoding);
+			if (!printed.isEmpty())
+				fail("Remove the printed string in the methods: " + printed);
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
     }
 
     @Test
@@ -1270,7 +1312,57 @@ public class TestGraph {
         assertEquals(4, graph.numberOfVertices());
     }
 
-    // TODO test saveFile
+    @Test
+    public void saveLoad() {
+    	/*
+         * This graph should be like this
+         *
+         * 1  ->  2  <-  6      7
+         *               ^      ^
+         * |      |      |      |
+         * v      v
+         * 3  <-  5  ->  4      8
+         */
+
+    	String fileName = "test/resources/test.json";
+    	
+        graph.addVertexIfAbsent("1");
+        graph.addVertexIfAbsent("2");
+        graph.addVertexIfAbsent("3");
+        graph.addVertexIfAbsent("4");
+        graph.addVertexIfAbsent("5");
+        graph.addVertexIfAbsent("6");
+        graph.addVertexIfAbsent("7");
+        graph.addVertexIfAbsent("8");
+
+        graph.addEdge("1", "2", 1);
+        graph.addEdge("1", "3", 1);
+        graph.addEdge("2", "5", 4);
+        graph.addEdge("4", "6", 6);
+        graph.addEdge("5", "3", 2);
+        graph.addEdge("5", "4", 5);
+        graph.addEdge("6", "2", 2);
+        graph.addEdge("8", "7", 9);
+        
+        try {
+			Graph.save(graph, fileName);
+			Graph.load(graph, fileName);
+			graph.removeAllVertex();
+			Graph.load(graph, fileName);
+		} catch (Exception e) {
+			fail(e.getMessage());
+		}
+        
+		graph = null;
+		shouldThrow(new NullPointerException(), () -> { try {
+			Graph.load(graph, fileName);
+		} catch (IOException e) {
+			fail();
+			e.printStackTrace();
+		} });
+    }
+    
+    
 
     private void shouldContain(Collection<?> actual, Object... expected) {
         assertEquals("They have not the same number of elements\nActual: " + actual, expected.length, actual.size());

@@ -153,7 +153,6 @@ public class GraphInfo<V, W extends Number> extends JPanel {
 				graphPanel.save(fileText.getText());
 				textResult.setText("");
 			} catch (IOException e1) {
-				e1.printStackTrace();
 				textResult.setText(e1.getMessage());
 			}
         });
@@ -163,7 +162,6 @@ public class GraphInfo<V, W extends Number> extends JPanel {
 				graphPanel.load(fileText.getText());
 				textResult.setText("");
 			} catch (IOException e1) {
-				e1.printStackTrace();
 				textResult.setText(e1.getMessage());
 			}
         });

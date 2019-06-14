@@ -31,6 +31,8 @@ public class GraphPanel<V, W extends Number> extends Component {
 	private static final long serialVersionUID = 1L;
 	private final GraphicalView<VertexComponent<V>> vertexRender;
     private final GraphicalView<EdgeComponent<V, W>> edgeRender;
+    private final Class<V> classV;
+    private final Class<W> classW;
 
     private final Container vertices = new Container();
     private final Container edges = new Container();
@@ -40,9 +42,11 @@ public class GraphPanel<V, W extends Number> extends Component {
     
     private GraphListener old = null;
 
-    public GraphPanel(GraphicalView<VertexComponent<V>> vertexRender, GraphicalView<EdgeComponent<V, W>> edgeRender) {
+    public GraphPanel(GraphicalView<VertexComponent<V>> vertexRender, GraphicalView<EdgeComponent<V, W>> edgeRender, Class<V> classV, Class<W> classW) {
         this.vertexRender = vertexRender;
         this.edgeRender = edgeRender;
+        this.classV = classV;
+        this.classW = classW;
     }
 
     public Graph<V, W> getGraph() {
@@ -166,17 +170,19 @@ public class GraphPanel<V, W extends Number> extends Component {
     }
     
     public void load(String fileName) throws IOException {
-    	String saveContent = Graph.load(graph, fileName);
+    	String saveContent = Graph.load(graph, fileName, classV, classW);
     	GraphGraphicalSave save = Graph.GSON.fromJson(saveContent, GraphGraphicalSave.class);
     	vertices.removeAll();
     	edges.removeAll();
     	
-    	for(int i = 0; i<save.vertices.size(); i++) {
-    		V v = save.vertices.get(i);
-    		Point p = save.points.get(i);
+    	for(int i = 0; i<save.vertices.length; i++) {
+    		V v = Graph.GSON.fromJson(save.vertices[i], classV);
+    		Point p = save.points[i];
     		addVertex(p, v);
     	}
-    	save.vertices.forEach(v -> graph.getEdgesOut(v).forEach(e -> addEdge(e)));
+    	
+    	for(String v : save.vertices)
+    		graph.getEdgesOut(Graph.GSON.fromJson(v, classV)).forEach(e -> addEdge(e));
     	
     	repaint();
     }
@@ -226,16 +232,34 @@ public class GraphPanel<V, W extends Number> extends Component {
     class GraphGraphicalSave {
     	public GraphGraphicalSave() {}
     	protected GraphGraphicalSave(Container vertices) {
-    		this.vertices = new LinkedList<>();
-    		this.points = new LinkedList<>();
+    		List<String> v = new LinkedList<>();
+    		List<Point> p = new LinkedList<>();
     		
         	for(Component vertex : vertices.getComponents()) {
-    			this.points.add(new Point(vertex.getX(), vertex.getY()));
-    			this.vertices.add(((VertexComponent<V>) vertex).vertex.getValue());
+        		Point temp = new Point(vertex.getX(), vertex.getY());
+        		temp.x += vertex.getWidth() / 2;
+        		temp.y += vertex.getHeight() / 2;
+        		
+    			p.add(temp);
+    			v.add(Graph.GSON.toJson(((VertexComponent<V>) vertex).vertex.getValue()));
+        	}
+        	
+        	int i = 0;
+        	this.vertices = new String[v.size()];
+        	for(String s : v) {
+        		this.vertices[i] = s;
+        		i++;
+        	}
+        	
+        	i = 0;
+        	this.points = new Point[p.size()];
+        	for(Point pt : p) {
+        		this.points[i] = pt;
+        		i++;
         	}
     	}
     	
-    	public List<V> vertices;
-    	public List<Point> points;
+    	public String[] vertices;
+    	public Point[] points;
     }
 }

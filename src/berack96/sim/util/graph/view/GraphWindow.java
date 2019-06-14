@@ -23,7 +23,7 @@ public class GraphWindow<V, W extends Number> extends JFrame {
 	private static final long serialVersionUID = 1L;
 
 	public static void main(String[] args) {
-        GraphPanel<Integer, Integer> panel = new GraphPanel<>(new VertexView<>(), new EdgeView<>());
+        GraphPanel<Integer, Integer> panel = new GraphPanel<>(new VertexView<>(), new EdgeView<>(), Integer.class, Integer.class);
         GraphWindow<Integer, Integer> win = new GraphWindow<>(panel, new VertexIntListener(panel), new EdgeIntListener<>(panel));
         Dimension dim = Toolkit.getDefaultToolkit().getScreenSize(); // full screen
         dim.setSize(dim.width / 2, dim.height / 2);

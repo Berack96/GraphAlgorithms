@@ -13,6 +13,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -23,6 +24,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.google.gson.JsonSyntaxException;
 
 import berack96.sim.util.graph.Edge;
 import berack96.sim.util.graph.Graph;
@@ -1332,6 +1335,8 @@ public class TestGraph {
     	String fileName = "test/resources/test.json";
     	Set<String> vertices = new HashSet<>();
     	Set<Edge<String, Integer>> edges = new HashSet<>();
+    	Map<String, Set<Object>> marks = new HashMap<>();
+    	Set<Object> temp = new HashSet<>();
     	
     	vertices.add("1");
     	vertices.add("2");
@@ -1351,28 +1356,61 @@ public class TestGraph {
     	edges.add(new Edge<>("6", "2", 2));
     	edges.add(new Edge<>("8", "7", 9));
     	
+    	temp.add(1);
+    	marks.put("2", new HashSet<>(temp));
+    	temp.add("blue");
+    	marks.put("1", new HashSet<>(temp));
+    	marks.put("7", new HashSet<>(temp));
+    	temp.remove(1);
+    	temp.add(4.0);
+    	marks.put("4", new HashSet<>(temp));
+    	marks.put("8", new HashSet<>(temp));
+    	temp.remove(4.0);
+    	temp.add("red");
+    	marks.put("5", new HashSet<>(temp));
+    	temp.remove("blue");
+    	marks.put("6", new HashSet<>(temp));
+    	temp.clear();
+    	
         graph.addAllVertices(vertices);
         graph.addAllEdges(edges);
-        
-        /* because GSON convert to double */
-        /*
-        Set<Edge<String, Double>> edgesD = new HashSet<>();
-        edges.forEach((e) -> edgesD.add(new Edge<String, Double>(e.getSource(), e.getDestination(), e.getWeight().doubleValue())));
-        */
-        Set<Edge<String, Integer>> edgesD = edges;
+        marks.forEach((v, m) -> m.forEach(mk -> graph.mark(v, mk)));
         
         try {
 			Graph.save(graph, fileName);
 			Graph.load(graph, fileName, String.class, Integer.class);
 			shouldContain(graph.vertices(), vertices.toArray());
-			shouldContain(graph.edges(), edgesD.toArray());
+			shouldContain(graph.edges(), edges.toArray());
+			//marks.forEach((v, m) -> shouldContain(graph.getMarks(v), m.toArray()));
 			
 			graph.removeAllVertex();
 			Graph.load(graph, fileName, String.class, Integer.class);
 			shouldContain(graph.vertices(), vertices.toArray());
-			shouldContain(graph.edges(), edgesD.toArray());
+			shouldContain(graph.edges(), edges.toArray());
+			//marks.forEach((v, m) -> shouldContain(graph.getMarks(v), m.toArray()));
 		} catch (Exception e) {
 			fail(e.getMessage());
+		}
+        
+
+        try {
+			Graph.load(graph, "sadadafacensi", String.class, Integer.class);
+			fail("Should have been thrown IOException");
+		} catch (Exception ignore) {
+			if (!(ignore instanceof IOException))
+				fail("Should have been thrown IOException " + ignore.getMessage());
+		}
+        
+		shouldContain(graph.vertices(), vertices.toArray());
+		shouldContain(graph.edges(), edges.toArray());
+		//marks.forEach((v, m) -> shouldContain(graph.getMarks(v), m.toArray()));
+        
+        try {
+			Graph.load(graph, fileName + ".fail", String.class, Integer.class);
+			fail("Should have been thrown JsonSyntaxException");
+		} catch (Exception ignore) {
+			if (!(ignore instanceof JsonSyntaxException))
+				fail("Should have been thrown JsonSyntaxException " + ignore.getMessage());
 		}
         
 		graph = null;

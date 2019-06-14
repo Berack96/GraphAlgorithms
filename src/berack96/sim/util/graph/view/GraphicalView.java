@@ -9,7 +9,8 @@ import java.awt.*;
  * @author Berack96
  */
 public interface GraphicalView<O> {
-    /**
+    
+	/**
      * Box where the object is sensible at listeners (like Hitbox)
      *
      * @param obj    the object to draw
@@ -17,7 +18,7 @@ public interface GraphicalView<O> {
      * @return a rectangle where the object is sensible to the listeners
      */
     Rectangle getBox(O obj, Point center);
-
+    
     /**
      * The paint function, aka the part where you can draw things (like Mesh)
      *

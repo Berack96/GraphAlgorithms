@@ -1,16 +1,18 @@
 package berack96.sim.util.graph;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
+import berack96.sim.util.graph.models.GraphSaveStructure;
 import berack96.sim.util.graph.visit.VisitInfo;
 import berack96.sim.util.graph.visit.VisitStrategy;
 
@@ -548,22 +550,65 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      */
     Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException;
 
+    /**
+     * Save the Graph passed as input to a file inserted as parameter.<br>
+     * The resulting file is a Json string representing all the graph.<br>
+     * If the directory for getting through the file do not exist,<br>
+     * then it is created.
+     * 
+     * @param graph the graph to save
+     * @param file the name of the file
+     * @throws IOException for various reason that appear in the message, but the most common is that the file is not found.
+     */
     static void save(Graph<?, ?> graph, String file) throws IOException {
     	save(graph, "", file);
     }
     
-    static <V, W extends Number> void save(Graph<V, W> graph, String other, String file) throws IOException {
-    	GraphSaveStructure<V, W> save = new GraphSaveStructure<>(graph, other);
+    /**
+     * Save the Graph passed as input to a file inserted as parameter.<br>
+     * The resulting file is a Json string representing all the graph.<br>
+     * If the directory for getting through the file do not exist,<br>
+     * then it is created.<br>
+     * The additional parameter is used if you want to save other as well as the graph.
+     * 
+     * @param graph the graph to save
+     * @param other other things to save
+     * @param file the name of the file
+     * @throws IOException for various reason that appear in the message, but the most common is that the file is not found.
+     */
+    static void save(Graph<?, ?> graph, String other, String file) throws IOException {
+    	GraphSaveStructure save = new GraphSaveStructure(graph, other);
+    	int slash = file.lastIndexOf("\\");
+    	if(slash == -1)
+    		slash = file.lastIndexOf("/");
+    	if(slash != -1) {
+    		String dir = file.substring(0, slash);
+    		File fDir = new File(dir);
+    		fDir.mkdirs();
+    	}
+    	
     	FileWriter writer = new FileWriter(file);
     	
     	GSON.toJson(save, writer);
     	writer.close();
     }
     
-    @SuppressWarnings("unchecked")
-    static <V, W extends Number> String load(Graph<V, W> graph, String file, Class<V> classV, Class<W> classW) throws IOException {
-    	graph.removeAllVertex();
-    	
+    /**
+     * Load an already saved graph in an instance of a graph.
+     * Before loading the graph, it is emptied.
+     * 
+     * @param <V> the parameter needed for the vertex
+     * @param <W> the parameter needed for the weight
+     * @param graph the graph to load with
+     * @param file the file where the graph is saved
+     * @param classV the class used for the Vertex
+     * @param classW the class used for the Weight
+     * @return the string saved in other, if any
+     * @throws IOException for any possible reason, the most common: the file doesn't exist
+     * @throws NullPointerException if the graph is null
+     * @throws JsonSyntaxException if the file is malformed or corrupted
+     */
+    static <V, W extends Number> String load(Graph<V, W> graph, String file, Class<V> classV, Class<W> classW) throws IOException, NullPointerException, JsonSyntaxException {
     	FileReader reader = new FileReader(file);
     	StringBuilder fileContent = new StringBuilder();
     	int c;
@@ -571,55 +616,23 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     	while((c = reader.read()) != -1)
     		fileContent.append((char)c);
     	reader.close();
-    	GraphSaveStructure<V, W> save = GSON.fromJson(fileContent.toString(), GraphSaveStructure.class);
+    	GraphSaveStructure save = GSON.fromJson(fileContent.toString(), GraphSaveStructure.class);
     	
+    	graph.removeAllVertex();
     	for(String str : save.vertices)
     		graph.addVertex(GSON.fromJson(str, classV));
     	
-    	for(int i = 0; i<save.edges.src.size(); i++) {    	
-    		V s = GSON.fromJson(save.edges.src.get(i), classV);
-    		V d = GSON.fromJson(save.edges.dest.get(i), classV);
-    		W w = GSON.fromJson(save.edges.weight.get(i), classW);
-    		graph.addEdge(s, d, w);
-    	}
+    	for(int i = 0; i<save.edges.length; i++)
+    		graph.addEdge(
+    				GSON.fromJson(save.edges[i].src, classV),
+    				GSON.fromJson(save.edges[i].dest, classV),
+    				GSON.fromJson(save.edges[i].weight, classW));
+    	/*
+    	for(int i = 0; i<save.marks.length; i++)
+    		graph.mark(GSON.fromJson(save.marks[i].vert, classV), save.marks[i].mark);
+    	*/
     	return save.other;
     }
     
-    class GraphSaveStructure<V, W extends Number> {
-    	public GraphSaveStructure() {}
-    	protected GraphSaveStructure(Graph<V, W> graph, String other) {
-    		vertices = new LinkedList<>();
-    		
-    		for(V v: graph.vertices())
-    			vertices.add(GSON.toJson(v));
-			edges = new EdgeSaveStructure<>(graph.edges());
-    		this.other = other;
-    	}
-    	
-    	public List<String> vertices;
-    	public EdgeSaveStructure<V, W> edges;
-    	public String other;
-    }
-    
-    class EdgeSaveStructure<V, W extends Number> {
-    	public EdgeSaveStructure() {}
-    	protected EdgeSaveStructure(Collection<Edge<V, W>> edges) {
-    		src = new LinkedList<>();
-    		dest = new LinkedList<>();
-    		weight = new LinkedList<>();
-    		
-    		for(Edge<V, W> ed : edges) {
-    			src.add(GSON.toJson(ed.getSource()));
-    			dest.add(GSON.toJson(ed.getDestination()));
-    			weight.add(GSON.toJson(ed.getWeight()));
-    		}
-    	}
-
-    	public List<String> src;
-    	public List<String> dest;
-    	public List<String> weight;
-    }
-    
-    // TODO maybe -> STATIC saveOnFile(orString) INSTANCE loadFromFile(orString), but need JSON parser
     // TODO maybe, but i don't think so... STATIC DISTANCE V* -> V*
 }

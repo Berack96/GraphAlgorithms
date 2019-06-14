@@ -4,8 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.GridLayout;
 import java.awt.event.ItemEvent;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -21,8 +19,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.BevelBorder;
-
-import com.google.gson.Gson;
 
 import berack96.sim.util.graph.Graph;
 import berack96.sim.util.graph.view.edge.EdgeListener;
@@ -141,24 +137,34 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         components.forEach(panelVertex::add);
         components.clear();
 
+        /* SAVE/LOAD errors */
+        JLabel textResult = new JLabel();
+        textResult.setForeground(Color.RED);
+        
+        JPanel panelErrors = new JPanel();
+        panelErrors.setOpaque(false);
+        panelErrors.add(textResult);
+        
         /* SAVE/LOAD */
-        /*
         JTextField fileText = new JTextField();
         JButton saveB = new JButton("Save");
         saveB.addActionListener(a -> {
         	try {
-				Graph.save(graphPanel.getGraph(), fileText.getText());
+				graphPanel.save(fileText.getText());
+				textResult.setText("");
 			} catch (IOException e1) {
 				e1.printStackTrace();
+				textResult.setText(e1.getMessage());
 			}
         });
         JButton loadB = new JButton("Load");
         loadB.addActionListener(a -> {
         	try {
-        		Graph<V, W> graph = graphPanel.getGraph();
-				Graph.load((Graph<Object, Number>) graph, fileText.getText());
+				graphPanel.load(fileText.getText());
+				textResult.setText("");
 			} catch (IOException e1) {
 				e1.printStackTrace();
+				textResult.setText(e1.getMessage());
 			}
         });
         components.add(new JLabel("File to save/load: "));
@@ -172,7 +178,6 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         panelSave.setLayout(new GridLayout(components.size()/2, 2, 2*2, 2*2));
         components.forEach(panelSave::add);
         components.clear();
-        */
 
         /* ADDING COMPONENTS */
         this.setBackground(Color.LIGHT_GRAY);
@@ -182,6 +187,8 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         this.add(panelDescription);
         this.add(panelInfo);
         this.add(panelVertex);
+        this.add(panelErrors);
+        this.add(panelSave);
         /*this.add(panelSave);*/
 
         modVertex.doClick();

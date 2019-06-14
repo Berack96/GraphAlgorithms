@@ -416,17 +416,18 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         final Graph<V, W> sub = new MapGraph<>();
         final Set<V> allVertices = new HashSet<>();
         final Set<Object> allMarkers = new HashSet<>();
+        final boolean isEmpty = (marker == null || marker.length == 0);
         
-        if (marker != null)
+        if (!isEmpty)
         	for (Object mark: marker)
         		allMarkers.add(mark);
 
         markers.forEach( (mark, set) -> {
-        	if (marker == null || allMarkers.contains(mark))
+        	if (isEmpty || allMarkers.contains(mark))
         		allVertices.addAll(set);
         });
-        
-        if (marker == null) {
+
+        if (isEmpty) {
             Collection<V> toAdd = vertices();
             toAdd.removeAll(allVertices);
             allVertices.clear();

@@ -4,6 +4,7 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -24,11 +25,12 @@ import berack96.sim.util.graph.visit.VisitStrategy;
  */
 public interface Graph<V, W extends Number> extends Iterable<V> {
 
-    String NOT_DAG = "The graph is not a DAG";
-    String NOT_CONNECTED = "The source vertex doesn't have a path that reach the destination";
-    String PARAM_NULL = "The parameter must not be null";
-    String VERTEX_NOT_CONTAINED = "The vertex must be contained in the graph";
-
+    final String NOT_DAG = "The graph is not a DAG";
+    final String NOT_CONNECTED = "The source vertex doesn't have a path that reach the destination";
+    final String PARAM_NULL = "The parameter must not be null";
+    final String VERTEX_NOT_CONTAINED = "The vertex must be contained in the graph";
+    final Gson GSON = new Gson();
+    
     /**
      * Tells if the graph has some cycle.<br>
      * A cycle is detected if visiting the graph G starting from V1 (that is any of the vertex of G),
@@ -515,7 +517,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     /**
      * Get a sub-graph of the current one with only the vertex marked with the selected markers.<br>
      * Each vertex will have all his edges, but only the ones with the destination marked with the same marker.<br>
-     * If the marker is null then the returning graph will have all the vertices that are not marked by any marker.<br>
+     * If the marker is not specified or is null then the returning graph will have all the vertices that are not marked by any marker.<br>
      * If the graph doesn't contain any vertex with that marker then an empty graph is returned.
      *
      * @param marker one or more markers
@@ -547,19 +549,21 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException;
 
     static void save(Graph<?, ?> graph, String file) throws IOException {
-    	GraphSaveStructure<?, ?> save = new GraphSaveStructure<>(graph);
-    	Gson gson = new Gson();
+    	save(graph, "", file);
+    }
+    
+    static <V, W extends Number> void save(Graph<V, W> graph, String other, String file) throws IOException {
+    	GraphSaveStructure<V, W> save = new GraphSaveStructure<>(graph, other);
     	FileWriter writer = new FileWriter(file);
     	
-    	writer.write(gson.toJson(save));
+    	GSON.toJson(save, writer);
     	writer.close();
     }
     
     @SuppressWarnings("unchecked")
-    static <V, W extends Number> void load(Graph<V, W> graph, String file) throws IOException {
+    static <V, W extends Number> String load(Graph<V, W> graph, String file, Class<V> classV, Class<W> classW) throws IOException {
     	graph.removeAllVertex();
     	
-    	Gson gson = new Gson();
     	FileReader reader = new FileReader(file);
     	StringBuilder fileContent = new StringBuilder();
     	int c;
@@ -567,21 +571,53 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     	while((c = reader.read()) != -1)
     		fileContent.append((char)c);
     	reader.close();
-    	GraphSaveStructure<V, W> save = gson.fromJson(fileContent.toString(), GraphSaveStructure.class);
+    	GraphSaveStructure<V, W> save = GSON.fromJson(fileContent.toString(), GraphSaveStructure.class);
     	
-		graph.addAllVertices(save.vertices);
-    	graph.addAllEdges(save.edges);
+    	for(String str : save.vertices)
+    		graph.addVertex(GSON.fromJson(str, classV));
+    	
+    	for(int i = 0; i<save.edges.src.size(); i++) {    	
+    		V s = GSON.fromJson(save.edges.src.get(i), classV);
+    		V d = GSON.fromJson(save.edges.dest.get(i), classV);
+    		W w = GSON.fromJson(save.edges.weight.get(i), classW);
+    		graph.addEdge(s, d, w);
+    	}
+    	return save.other;
     }
     
     class GraphSaveStructure<V, W extends Number> {
     	public GraphSaveStructure() {}
-    	protected GraphSaveStructure(Graph<V, W> graph) {
-    		vertices = graph.vertices();
-    		edges = graph.edges();
+    	protected GraphSaveStructure(Graph<V, W> graph, String other) {
+    		vertices = new LinkedList<>();
+    		
+    		for(V v: graph.vertices())
+    			vertices.add(GSON.toJson(v));
+			edges = new EdgeSaveStructure<>(graph.edges());
+    		this.other = other;
     	}
     	
-    	public Collection<V> vertices;
-    	public Collection<Edge<V, W>> edges;
+    	public List<String> vertices;
+    	public EdgeSaveStructure<V, W> edges;
+    	public String other;
+    }
+    
+    class EdgeSaveStructure<V, W extends Number> {
+    	public EdgeSaveStructure() {}
+    	protected EdgeSaveStructure(Collection<Edge<V, W>> edges) {
+    		src = new LinkedList<>();
+    		dest = new LinkedList<>();
+    		weight = new LinkedList<>();
+    		
+    		for(Edge<V, W> ed : edges) {
+    			src.add(GSON.toJson(ed.getSource()));
+    			dest.add(GSON.toJson(ed.getDestination()));
+    			weight.add(GSON.toJson(ed.getWeight()));
+    		}
+    	}
+
+    	public List<String> src;
+    	public List<String> dest;
+    	public List<String> weight;
     }
     
     // TODO maybe -> STATIC saveOnFile(orString) INSTANCE loadFromFile(orString), but need JSON parser

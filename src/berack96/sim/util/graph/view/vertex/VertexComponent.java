@@ -12,4 +12,19 @@ public class VertexComponent<V> extends Component {
     public VertexComponent(Vertex<V> vertex) {
         this.vertex = vertex;
     }
+    
+    
+    @Override
+    public String toString() {
+    	return "[" + vertex + " {" + getX() + "," + getY() + "}]";
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+    	try {
+    		return obj.getClass().equals(getClass()) && obj.toString().equals(toString());	
+    	} catch (Exception e) {
+    		return false;
+    	}
+    }
 }

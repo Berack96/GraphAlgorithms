@@ -27,7 +27,7 @@ public class Edge<V, W extends Number> {
      *
      * @param source      the source of the edge
      * @param destination the destination of the edge
-     * @param weight      the weight od the edge
+     * @param weight      the weight of the edge
      */
     public Edge(V source, V destination, W weight) {
         this.source = source;

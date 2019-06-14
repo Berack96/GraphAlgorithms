@@ -64,6 +64,7 @@ public class TestGraph {
     public void after() {
     	try {
 			String printed = bytes.toString(encoding);
+			bytes.reset();
 			if (!printed.isEmpty())
 				fail("Remove the printed string in the methods: " + printed);
 		} catch (UnsupportedEncodingException e) {
@@ -1186,6 +1187,10 @@ public class TestGraph {
                 new Edge<>("5", "4", 5),
                 new Edge<>("6", "2", 2));
         
+        sub = graph.subGraph();
+        shouldContain(sub.vertices(), "7", "8");
+        shouldContain(sub.edges(), new Edge<>("8", "7", 9));
+        
         sub = graph.subGraph(null);
         shouldContain(sub.vertices(), "7", "8");
         shouldContain(sub.edges(), new Edge<>("8", "7", 9));
@@ -1325,37 +1330,54 @@ public class TestGraph {
          */
 
     	String fileName = "test/resources/test.json";
+    	Set<String> vertices = new HashSet<>();
+    	Set<Edge<String, Integer>> edges = new HashSet<>();
     	
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+    	vertices.add("1");
+    	vertices.add("2");
+    	vertices.add("3");
+    	vertices.add("4");
+    	vertices.add("5");
+    	vertices.add("6");
+    	vertices.add("7");
+    	vertices.add("8");
 
-        graph.addEdge("1", "2", 1);
-        graph.addEdge("1", "3", 1);
-        graph.addEdge("2", "5", 4);
-        graph.addEdge("4", "6", 6);
-        graph.addEdge("5", "3", 2);
-        graph.addEdge("5", "4", 5);
-        graph.addEdge("6", "2", 2);
-        graph.addEdge("8", "7", 9);
+    	edges.add(new Edge<>("1", "2", 1));
+    	edges.add(new Edge<>("1", "3", 1));
+    	edges.add(new Edge<>("2", "5", 4));
+    	edges.add(new Edge<>("4", "6", 6));
+    	edges.add(new Edge<>("5", "3", 2));
+    	edges.add(new Edge<>("5", "4", 5));
+    	edges.add(new Edge<>("6", "2", 2));
+    	edges.add(new Edge<>("8", "7", 9));
+    	
+        graph.addAllVertices(vertices);
+        graph.addAllEdges(edges);
+        
+        /* because GSON convert to double */
+        /*
+        Set<Edge<String, Double>> edgesD = new HashSet<>();
+        edges.forEach((e) -> edgesD.add(new Edge<String, Double>(e.getSource(), e.getDestination(), e.getWeight().doubleValue())));
+        */
+        Set<Edge<String, Integer>> edgesD = edges;
         
         try {
 			Graph.save(graph, fileName);
-			Graph.load(graph, fileName);
+			Graph.load(graph, fileName, String.class, Integer.class);
+			shouldContain(graph.vertices(), vertices.toArray());
+			shouldContain(graph.edges(), edgesD.toArray());
+			
 			graph.removeAllVertex();
-			Graph.load(graph, fileName);
+			Graph.load(graph, fileName, String.class, Integer.class);
+			shouldContain(graph.vertices(), vertices.toArray());
+			shouldContain(graph.edges(), edgesD.toArray());
 		} catch (Exception e) {
 			fail(e.getMessage());
 		}
         
 		graph = null;
 		shouldThrow(new NullPointerException(), () -> { try {
-			Graph.load(graph, fileName);
+			Graph.load(graph, fileName, String.class, Integer.class);
 		} catch (IOException e) {
 			fail();
 			e.printStackTrace();

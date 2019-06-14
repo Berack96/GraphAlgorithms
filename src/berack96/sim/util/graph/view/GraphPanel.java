@@ -1,21 +1,31 @@
 package berack96.sim.util.graph.view;
 
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Observer;
+import java.util.Set;
+
+import berack96.sim.util.graph.Edge;
 import berack96.sim.util.graph.Graph;
 import berack96.sim.util.graph.MapGraph;
 import berack96.sim.util.graph.Vertex;
 import berack96.sim.util.graph.view.edge.EdgeComponent;
 import berack96.sim.util.graph.view.vertex.VertexComponent;
 
-import java.awt.*;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Observer;
-import java.util.Set;
-
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "deprecation"})
 public class GraphPanel<V, W extends Number> extends Component {
 
 	private static final long serialVersionUID = 1L;
@@ -60,8 +70,14 @@ public class GraphPanel<V, W extends Number> extends Component {
 
         if (component == null) {
             VertexComponent<V> v = new VertexComponent<>(new Vertex<>(graph, vertex));
-            if (!graph.contains(vertex)) {
-                v.vertex.addIfAbsent();
+            v.vertex.addIfAbsent();
+            boolean isContained = false;
+            
+            for(Component comp : vertices.getComponents())
+            	if (comp.equals(v))
+            		isContained = true;
+            
+            if (!isContained) {
                 v.setBounds(vertexRender.getBox(v, center));
                 vertices.add(v);
             }
@@ -81,6 +97,20 @@ public class GraphPanel<V, W extends Number> extends Component {
         vertex.setLocation(rectangle.x, rectangle.y);
     }
 
+    public void addEdge(Edge<V, W> edge) {
+    	VertexComponent<V> vSource = null;
+    	VertexComponent<V> vDest = null;
+    	for (Component comp : vertices.getComponents()) {
+    		VertexComponent<V> temp = (VertexComponent<V>) comp;
+    		V vTemp = temp.vertex.getValue();
+    		if (vSource == null && vTemp.equals(edge.getSource()))
+    			vSource = temp;
+    		if (vDest == null && vTemp.equals(edge.getDestination()))
+    			vDest = temp;
+    	}
+    	addEdge(vSource, vDest, edge.getWeight());
+    }
+    
     public void addEdge(VertexComponent<V> source, VertexComponent<V> dest, W weight) {
         try {
             Point center = new Point(Math.abs(source.getX() - dest.getY()), Math.abs(source.getY() - dest.getY()));
@@ -88,7 +118,9 @@ public class GraphPanel<V, W extends Number> extends Component {
             edgeComponent.setBounds(edgeRender.getBox(edgeComponent, center));
             edges.add(edgeComponent);
             graph.addEdge(edgeComponent.edge);
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        	ignore.printStackTrace();
+        }
     }
 
     public void removeEdge(VertexComponent<V> source, VertexComponent<V> dest) {
@@ -128,6 +160,26 @@ public class GraphPanel<V, W extends Number> extends Component {
         observers.remove(observer);
     }
 
+    public void save(String fileName) throws IOException {
+    	GraphGraphicalSave save = new GraphGraphicalSave(vertices);
+    	Graph.save(graph, Graph.GSON.toJson(save), fileName);
+    }
+    
+    public void load(String fileName) throws IOException {
+    	String saveContent = Graph.load(graph, fileName);
+    	GraphGraphicalSave save = Graph.GSON.fromJson(saveContent, GraphGraphicalSave.class);
+    	vertices.removeAll();
+    	edges.removeAll();
+    	
+    	for(int i = 0; i<save.vertices.size(); i++) {
+    		V v = save.vertices.get(i);
+    		Point p = save.points.get(i);
+    		addVertex(p, v);
+    	}
+    	save.vertices.forEach(v -> graph.getEdgesOut(v).forEach(e -> addEdge(e)));
+    	
+    	repaint();
+    }
 
     @Override
     public void setBounds(int x, int y, int width, int height) {
@@ -170,5 +222,20 @@ public class GraphPanel<V, W extends Number> extends Component {
     private void updateObservers() {
         observers.forEach(observer -> observer.update(null, this.graph));
     }
-
+    
+    class GraphGraphicalSave {
+    	public GraphGraphicalSave() {}
+    	protected GraphGraphicalSave(Container vertices) {
+    		this.vertices = new LinkedList<>();
+    		this.points = new LinkedList<>();
+    		
+        	for(Component vertex : vertices.getComponents()) {
+    			this.points.add(new Point(vertex.getX(), vertex.getY()));
+    			this.vertices.add(((VertexComponent<V>) vertex).vertex.getValue());
+        	}
+    	}
+    	
+    	public List<V> vertices;
+    	public List<Point> points;
+    }
 }

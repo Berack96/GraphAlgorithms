@@ -1,11 +1,11 @@
 package berack96.sim.util.graph.view.vertex;
 
+import java.util.Arrays;
+
 import berack96.sim.util.graph.Graph;
 import berack96.sim.util.graph.view.GraphPanel;
 
 public class VertexIntListener extends VertexListener<Integer> {
-
-    private Integer counter = 0;
 
     public VertexIntListener(GraphPanel<Integer, ?> panel) {
         super(panel);
@@ -16,9 +16,15 @@ public class VertexIntListener extends VertexListener<Integer> {
     
     @Override
     protected Integer buildNewVertex(Graph<Integer, ?> graph) {
-        if(graph.numberOfVertices() == 0)
-            counter = 0;
-        counter++;
-        return counter - 1;
+    	int counter = 0;
+    	Integer[] vertices = graph.vertices().toArray(new Integer[graph.numberOfVertices()]);
+    	Arrays.sort(vertices);
+    	
+    	for(int i = 0; i<vertices.length; i++) {
+    		if(!vertices[i].equals(counter))
+    			return counter;
+    		counter++;
+    	}
+        return counter;
     }
 }

@@ -19,10 +19,11 @@ public class VertexComponent<V> extends Component {
     	return "[" + vertex + " {" + getX() + "," + getY() + "}]";
     }
     
-    @Override
+    @SuppressWarnings("unchecked")
+	@Override
     public boolean equals(Object obj) {
     	try {
-    		return obj.getClass().equals(getClass()) && obj.toString().equals(toString());	
+    		return obj.getClass().equals(getClass()) && ((VertexComponent<V>)obj).vertex.equals(vertex);	
     	} catch (Exception e) {
     		return false;
     	}

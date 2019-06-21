@@ -51,6 +51,17 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     boolean isDAG();
 
     /**
+     * Check if the vertex passed is contained in the graph or not.<br>
+     * The vertex V1 is contained in the graph G, if and only if:<br>
+     * exist V2 in G such that V2.equals(V1)
+     *
+     * @param vertex the vertex to check
+     * @return true if the vertex is contained, false otherwise
+     * @throws NullPointerException if the vertex is null
+     */
+    boolean contains(V vertex) throws NullPointerException;
+
+    /**
      * Get an instance of the vertex linked with this graph.<br>
      * For more info see {@link Vertex}
      *
@@ -72,7 +83,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
 
     /**
      * Add the specified vertex to the graph only if the graph doesn't contains it.<br>
-     * The graph contains a vertex only if the method {@link #contains(V)} returns true.
+     * The graph contains a vertex only if the method {@link #contains(Object)} returns true.
      *
      * @param vertex the vertex to add
      * @return true if the vertex is added, false if the graph contains the vertex and therefore the new one is not added
@@ -107,16 +118,15 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     void removeAllVertex();
 
     /**
-     * Check if the vertex passed is contained in the graph or not.<br>
-     * The vertex V1 is contained in the graph G, if and only if:<br>
-     * exist V2 in G such that V2.equals(V1)
-     *
-     * @param vertex the vertex to check
-     * @return true if the vertex is contained, false otherwise
-     * @throws NullPointerException if the vertex is null
+     * Get all the marks of this graph.<br>
+     * Specifically it will return a collection of marks where every mark<br>
+     * as associated at least one vertex of the graph.<br>
+     * If the graph doesn't have vertex marked then it is returned an empty collection.
+     * 
+     * @return a collection of marks
      */
-    boolean contains(V vertex) throws NullPointerException;
-
+    Collection<Object> marks();
+    
     /**
      * Add to the specified vertex the mark passed.<br>
      * A vertex can have multiple marker.
@@ -469,6 +479,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param source   the source vertex of the visit
      * @param strategy the algorithm for visiting the graph
      * @param visit    the function to apply at each vertex
+     * @return an info of the visit
      * @throws NullPointerException     if one of the parameter is null (except the consumer)
      * @throws IllegalArgumentException if the vertex is not in the graph
      */
@@ -477,8 +488,8 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
     /**
      * This method will create a new Graph that is the transposed version of the original.<br>
      * At the end of this method the new graph will have all the edges inverted in orientation.<br>
-     * Example: if the graph G contains (V1, V2, V3) as vertex, and (V1->V2, V3->V2) as edges,
-     * the transpose graph G' will contain (V1, V2, V3) as vertex, and (V2->V1, V2->V3) as edges.
+     * Example: if the graph G contains (V1, V2, V3) as vertex, and (V1-&gt;V2, V3-&gt;V2) as edges,
+     * the transpose graph G' will contain (V1, V2, V3) as vertex, and (V2-&gt;V1, V2-&gt;V3) as edges.
      *
      * @return a transposed graph of this instance
      */
@@ -510,7 +521,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * Of course the sub-graph will contain the edges that link the vertices, but only the one selected.
      *
      * @param source the source vertex
-     * @param depth  the maximum depth (must be a positive number, if >=0 a graph containing only the source is returned)
+     * @param depth  the maximum depth (must be a positive number, if &gt;=0 a graph containing only the source is returned)
      * @return a sub-graph of the original
      * @throws NullPointerException     if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained
@@ -555,7 +566,8 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * Save the Graph passed as input to a file inserted as parameter.<br>
      * The resulting file is a Json string representing all the graph.<br>
      * If the directory for getting through the file do not exist,<br>
-     * then it is created.
+     * then it is created.<br>
+     * For now the marks are not included.
      * 
      * @param graph the graph to save
      * @param file the name of the file
@@ -570,6 +582,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * The resulting file is a Json string representing all the graph.<br>
      * If the directory for getting through the file do not exist,<br>
      * then it is created.<br>
+     * For now the marks are not included.<br>
      * The additional parameter is used if you want to save other as well as the graph.
      * 
      * @param graph the graph to save

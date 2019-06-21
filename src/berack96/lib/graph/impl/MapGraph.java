@@ -108,6 +108,17 @@ public class MapGraph<V, W extends Number> implements Graph<V, W> {
         checkNull(vertex);
         return edges.containsKey(vertex);
     }
+    
+    @Override
+    public Collection<Object> marks() {
+    	Collection<Object> ret = new HashSet<>();
+    	markers.forEach((m, v) -> {
+    		if(v.size() > 0)
+    			ret.add(m);
+    	}); 
+    	
+    	return ret;
+    }
 
     @Override
     public void mark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException {

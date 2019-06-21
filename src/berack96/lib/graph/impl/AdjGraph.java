@@ -57,7 +57,7 @@ public class AdjGraph<V, W extends Number> implements Graph<V, W> {
 	}
 
 	@Override
-	public void removeVertex(V vertex) throws IllegalArgumentException {
+	public void removeVertex(V vertex) throws NullPointerException, IllegalArgumentException {
 		// TODO Auto-generated method stub
 		
 	}
@@ -72,6 +72,12 @@ public class AdjGraph<V, W extends Number> implements Graph<V, W> {
 	public boolean contains(V vertex) throws NullPointerException {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public Collection<Object> marks() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
@@ -309,5 +315,5 @@ public class AdjGraph<V, W extends Number> implements Graph<V, W> {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 }

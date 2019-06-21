@@ -980,13 +980,17 @@ public class TestGraph {
         shouldThrow(notException, () -> graph.getMarks("hw7389"));
 
         shouldContain(graph.getMarks("1"));
+        shouldContain(graph.marks());
         graph.mark("1", "red");
         shouldContain(graph.getMarks("1"), "red");
+        shouldContain(graph.marks(), "red");
         graph.mark("1", "yellow");
+        shouldContain(graph.marks(), "red", "yellow");
         graph.mark("1", "blue");
         shouldContain(graph.getMarks("1"), "red", "yellow", "blue");
         graph.mark("1", "red");
         shouldContain(graph.getMarks("1"), "red", "yellow", "blue");
+        shouldContain(graph.marks(), "red", "yellow", "blue");
 
         shouldContain(graph.getMarks("2"));
         graph.mark("2", "red");
@@ -994,11 +998,14 @@ public class TestGraph {
         graph.mark("8", "blue");
         shouldContain(graph.getMarks("2"), "red");
         shouldContain(graph.getMarks("8"), "blue");
+        shouldContain(graph.marks(), "red", "yellow", "blue");
 
-        graph.unMark("2");
-        shouldContain(graph.getMarks("2"));
         graph.unMark("1");
         shouldContain(graph.getMarks("1"));
+        shouldContain(graph.marks(), "red", "blue");
+        graph.unMark("2");
+        shouldContain(graph.getMarks("2"));
+        shouldContain(graph.marks(), "blue");
 
         graph.mark("2", "red");
         graph.mark("2", "blue");
@@ -1007,8 +1014,10 @@ public class TestGraph {
         shouldContain(graph.getMarks("4"), "green");
         graph.mark("5", "green");
         shouldContain(graph.getMarks("5"), "green");
+        shouldContain(graph.marks(), "red", "blue", "green");
 
         graph.unMarkAll();
+        shouldContain(graph.marks());
         shouldContain(graph.getMarks("1"));
         shouldContain(graph.getMarks("2"));
         shouldContain(graph.getMarks("3"));
@@ -1019,10 +1028,15 @@ public class TestGraph {
         shouldContain(graph.getMarks("8"));
 
         graph.mark("1", "mark");
+        shouldContain(graph.marks(), "mark");
         graph.mark("2", "mark");
+        shouldContain(graph.marks(), "mark");
         graph.mark("3", "mark2");
+        shouldContain(graph.marks(), "mark", "mark2");
         graph.mark("1", "mark2");
+        shouldContain(graph.marks(), "mark", "mark2");
         graph.mark("1", 3);
+        shouldContain(graph.marks(), "mark", "mark2", 3);
         shouldContain(graph.getMarks("1"), "mark", "mark2", 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"), "mark2");
@@ -1031,6 +1045,7 @@ public class TestGraph {
         shouldContain(graph.getMarkedWith(3), "1");
 
         graph.unMark("1", "mark");
+        shouldContain(graph.marks(), "mark", "mark2", 3);
         shouldContain(graph.getMarks("1"), "mark2", 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"), "mark2");
@@ -1039,6 +1054,7 @@ public class TestGraph {
         shouldContain(graph.getMarkedWith(3), "1");
 
         graph.unMarkAll("mark2");
+        shouldContain(graph.marks(), "mark", 3);
         shouldContain(graph.getMarks("1"), 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"));
@@ -1048,6 +1064,7 @@ public class TestGraph {
         
         graph.unMark("1", "mark");
         graph.unMark("2", "mark2");
+        shouldContain(graph.marks(), "mark", 3);
         shouldContain(graph.getMarks("1"), 3);
         shouldContain(graph.getMarks("2"), "mark");
         shouldContain(graph.getMarks("3"));
@@ -1056,6 +1073,7 @@ public class TestGraph {
         shouldContain(graph.getMarkedWith(3), "1");
 
         graph.unMark("2", "mark");
+        shouldContain(graph.marks(), 3);
         shouldContain(graph.getMarks("1"), 3);
         shouldContain(graph.getMarks("2"));
         shouldContain(graph.getMarks("3"));
@@ -1064,6 +1082,7 @@ public class TestGraph {
         shouldContain(graph.getMarkedWith(3), "1");
         
         graph.unMarkAll(3);
+        shouldContain(graph.marks());
         shouldContain(graph.getMarks("1"));
         shouldContain(graph.getMarks("2"));
         shouldContain(graph.getMarks("3"));

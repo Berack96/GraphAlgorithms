@@ -1,46 +1,31 @@
 package berack96.test.lib;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import berack96.lib.graph.Edge;
+import berack96.lib.graph.Graph;
+import berack96.lib.graph.Vertex;
+import berack96.lib.graph.models.GraphSaveStructure;
+import berack96.lib.graph.visit.impl.BFS;
+import berack96.lib.graph.visit.impl.DFS;
+import berack96.lib.graph.visit.impl.VisitInfo;
+import com.google.gson.JsonSyntaxException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.*;
 
-import com.google.gson.JsonSyntaxException;
-
-import berack96.lib.graph.Edge;
-import berack96.lib.graph.Graph;
-import berack96.lib.graph.Vertex;
-import berack96.lib.graph.impl.AdjGraph;
-import berack96.lib.graph.impl.MapGraph;
-import berack96.lib.graph.impl.MatrixGraph;
-import berack96.lib.graph.visit.impl.BFS;
-import berack96.lib.graph.visit.impl.DFS;
-import berack96.lib.graph.visit.impl.VisitInfo;
-
-@SuppressWarnings("deprecation")
+@Timeout(value = 2)
 public class TestGraph {
 
-	/* We only try this for sake of simplicity */
+	/* I decided to only try this for sake of simplicity */
     private Graph<String, Integer> graph;
     
     private final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
@@ -48,17 +33,16 @@ public class TestGraph {
     private final String encoding = "UTF-8";
     private final Exception nullException = new NullPointerException(Graph.PARAM_NULL);
     private final Exception notException = new IllegalArgumentException(Graph.VERTEX_NOT_CONTAINED);
-    private final Exception unsuppException = new UnsupportedOperationException(Vertex.REMOVED);
+    private final Exception unSuppException = new UnsupportedOperationException(Vertex.REMOVED);
 
-    
-    @Before
+    @BeforeEach
     public void before() {
         // Change here the instance for changing all the test for that particular class
-        graph = new MapGraph<>();
-//        graph = new MatrixGraph<>();
-//        graph = new AdjGraph<>();
+        //graph = new berack96.lib.graph.impl.MapGraph<>();
+        //graph = new berack96.lib.graph.impl.MatrixGraph<>();
+    	graph = new berack96.lib.graph.impl.ListGraph<>();
 
-        PrintStream p = null;
+        PrintStream p;
         try {
 			p = new PrintStream(bytes, true, encoding);
 	        System.setErr(p);
@@ -68,7 +52,7 @@ public class TestGraph {
 		}
     }
     
-    @After
+    @AfterEach
     public void after() {
     	try {
 			String printed = bytes.toString(encoding);
@@ -82,48 +66,48 @@ public class TestGraph {
 
     @Test
     public void basicVertex() {
-        assertEquals(0, graph.numberOfVertices());
+        assertEquals(0, graph.size());
 
-        graph.addVertex("1");
-        graph.addVertex("2");
-        shouldThrow(nullException, () -> graph.addVertex(null));
+        graph.add("1");
+        graph.add("2");
+        shouldThrow(nullException, () -> graph.add(null));
 
         assertTrue(graph.contains("1"));
         assertFalse(graph.contains("0"));
         assertTrue(graph.contains("2"));
         assertFalse(graph.contains("3"));
-        assertEquals(2, graph.numberOfVertices());
+        assertEquals(2, graph.size());
 
-        graph.removeVertex("1");
+        graph.remove("1");
         assertFalse(graph.contains("1"));
         assertTrue(graph.contains("2"));
-        assertEquals(1, graph.numberOfVertices());
+        assertEquals(1, graph.size());
 
-        graph.addVertex("3");
+        graph.add("3");
         assertTrue(graph.contains("3"));
         shouldThrow(nullException, () -> graph.contains(null));
-        shouldThrow(nullException, () -> graph.addVertexIfAbsent(null));
+        shouldThrow(nullException, () -> graph.addIfAbsent(null));
 
-        assertTrue(graph.addVertexIfAbsent("4"));
-        assertFalse(graph.addVertexIfAbsent("4"));
-        assertFalse(graph.addVertexIfAbsent("2"));
+        assertTrue(graph.addIfAbsent("4"));
+        assertFalse(graph.addIfAbsent("4"));
+        assertFalse(graph.addIfAbsent("2"));
 
-        assertEquals(3, graph.numberOfVertices());
+        assertEquals(3, graph.size());
         shouldContain(graph.vertices(), "2", "3", "4");
 
-        graph.removeAllVertex();
+        graph.removeAll();
         shouldContain(graph.vertices());
 
         Set<String> vertices = new HashSet<>(Arrays.asList("1", "5", "24", "2", "3"));
-        graph.addAllVertices(vertices);
+        graph.addAll(vertices);
         shouldContain(graph.vertices(), vertices.toArray());
-        graph.removeVertex("1");
-        graph.removeVertex("24");
+        graph.remove("1");
+        graph.remove("24");
         shouldContain(graph.vertices(), "5", "2", "3");
-        graph.addAllVertices(vertices);
+        graph.addAll(vertices);
         shouldContain(graph.vertices(), vertices.toArray());
 
-        shouldThrow(nullException, () -> graph.addAllVertices(null));
+        shouldThrow(nullException, () -> graph.addAll(null));
     }
 
     @Test
@@ -136,16 +120,16 @@ public class TestGraph {
          * v      v
          * 3  <-> 5  ->  4
          */
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
 
         shouldThrow(nullException, () -> graph.addEdge(null, "2", 1));
         shouldThrow(nullException, () -> graph.addEdge(null, null, 1));
         shouldThrow(nullException, () -> graph.addEdge("1", null, 1));
-        shouldThrow(new NullPointerException(), () -> graph.addEdge(null));
+        shouldThrow(nullException, () -> graph.addEdge(null));
         shouldThrow(nullException, () -> graph.addEdge(new Edge<>("1", null, 1)));
         shouldThrow(nullException, () -> graph.addEdge(new Edge<>(null, null, 1)));
         shouldThrow(nullException, () -> graph.addEdge(new Edge<>(null, "2", 1)));
@@ -193,21 +177,21 @@ public class TestGraph {
 
         assertEquals(6, graph.numberOfEdges());
 
-        assertEquals(new Integer(1), graph.getWeight("1", "2"));
-        assertEquals(new Integer(1), graph.getWeight("1", "3"));
-        assertEquals(new Integer(4), graph.getWeight("2", "5"));
-        assertEquals(new Integer(2), graph.getWeight("3", "5"));
-        assertEquals(new Integer(2), graph.getWeight("5", "3"));
-        assertEquals(new Integer(3), graph.getWeight("5", "4"));
+        assertEquals(Integer.valueOf(1), graph.getWeight("1", "2"));
+        assertEquals(Integer.valueOf(1), graph.getWeight("1", "3"));
+        assertEquals(Integer.valueOf(4), graph.getWeight("2", "5"));
+        assertEquals(Integer.valueOf(2), graph.getWeight("3", "5"));
+        assertEquals(Integer.valueOf(2), graph.getWeight("5", "3"));
+        assertEquals(Integer.valueOf(3), graph.getWeight("5", "4"));
 
         assertNull(graph.getWeight("1", "4"));
 
-        assertEquals(new Integer(1), graph.addEdge("1", "2", 102));
-        assertEquals(new Integer(102), graph.addEdge("1", "2", 3));
-        assertEquals(new Integer(3), graph.addEdge("1", "2", 1));
-        assertEquals(new Integer(1), graph.addEdge(new Edge<>("1", "2", 102)));
-        assertEquals(new Integer(102), graph.addEdge(new Edge<>("1", "2", 3)));
-        assertEquals(new Integer(3), graph.addEdge(new Edge<>("1", "2", 1)));
+        assertEquals(Integer.valueOf(1), graph.addEdge("1", "2", 102));
+        assertEquals(Integer.valueOf(102), graph.addEdge("1", "2", 3));
+        assertEquals(Integer.valueOf(3), graph.addEdge("1", "2", 1));
+        assertEquals(Integer.valueOf(1), graph.addEdge(new Edge<>("1", "2", 102)));
+        assertEquals(Integer.valueOf(102), graph.addEdge(new Edge<>("1", "2", 3)));
+        assertEquals(Integer.valueOf(3), graph.addEdge(new Edge<>("1", "2", 1)));
 
         assertEquals(6, graph.numberOfEdges());
         assertTrue(graph.containsEdge("1", "2"));
@@ -298,10 +282,10 @@ public class TestGraph {
         assertEquals(35, graph.addEdgeAndVertices(new Edge<>("2aa", "323", 5)).intValue());
         assertEquals(50, graph.addEdgeAndVertices(new Edge<>("2", "323", 500)).intValue());
 
-        graph.removeAllVertex();
-        graph.addVertex("aaa");
-        graph.addVertex("1");
-        graph.addVertex("2");
+        graph.removeAll();
+        graph.add("aaa");
+        graph.add("1");
+        graph.add("2");
 
         shouldContain(graph.vertices(), "1", "2", "aaa");
         shouldContain(graph.edges());
@@ -333,12 +317,12 @@ public class TestGraph {
          * 3  <-> 5  ->  4
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
 
         shouldContain(graph.edges());
 
@@ -351,12 +335,12 @@ public class TestGraph {
         graph.addEdge("5", "3", 9);
         graph.addEdge("5", "4", 5);
 
-        shouldContain(graph.getChildren("1"), "2", "3");
-        shouldContain(graph.getChildren("2"), "5", "6");
-        shouldContain(graph.getChildren("3"), "5");
-        shouldContain(graph.getChildren("4"), "6");
-        shouldContain(graph.getChildren("5"), "3", "4");
-        shouldContain(graph.getChildren("6"));
+        shouldContain(graph.getChildrens("1"), "2", "3");
+        shouldContain(graph.getChildrens("2"), "5", "6");
+        shouldContain(graph.getChildrens("3"), "5");
+        shouldContain(graph.getChildrens("4"), "6");
+        shouldContain(graph.getChildrens("5"), "3", "4");
+        shouldContain(graph.getChildrens("6"));
 
         shouldContain(graph.getAncestors("1"));
         shouldContain(graph.getAncestors("2"), "1");
@@ -417,6 +401,25 @@ public class TestGraph {
                 new Edge<>("3", "5", 2),
                 new Edge<>("5", "3", 9),
                 new Edge<>("5", "4", 5));
+        
+        /* Weird case in the add */
+        graph.addIfAbsent("2");
+        shouldContain(graph.edges(),
+                new Edge<>("1", "2", 1),
+                new Edge<>("1", "3", 1),
+                new Edge<>("2", "5", 4),
+                new Edge<>("2", "6", 5),
+                new Edge<>("3", "5", 2),
+                new Edge<>("4", "6", 6),
+                new Edge<>("5", "3", 9),
+                new Edge<>("5", "4", 5));
+        graph.add("2");
+        shouldContain(graph.edges(),
+                new Edge<>("1", "3", 1),
+                new Edge<>("3", "5", 2),
+                new Edge<>("4", "6", 6),
+                new Edge<>("5", "3", 9),
+                new Edge<>("5", "4", 5));
     }
 
     @Test
@@ -424,8 +427,9 @@ public class TestGraph {
         VisitInfo<Integer> info = new VisitInfo<>(0);
         assertTrue(info.isDiscovered(0));
         assertFalse(info.isVisited(0));
+        assertEquals(0, info.getDepth(0));
         assertEquals(0, info.getTimeDiscover(0));
-        assertEquals(new Integer(0), info.getSource());
+        assertEquals(Integer.valueOf(0), info.getSource());
         assertNull(info.getParentOf(0));
 
         assertFalse(info.isVisited(null));
@@ -434,10 +438,12 @@ public class TestGraph {
         shouldThrow(new IllegalArgumentException(), () -> info.getTimeVisit(0));
         shouldThrow(new IllegalArgumentException(), () -> info.getTimeDiscover(1));
         shouldThrow(new IllegalArgumentException(), () -> info.getParentOf(2));
-        shouldThrow(new IllegalArgumentException(), () -> info.getParentOf(null));
+        shouldThrow(new IllegalArgumentException(), () -> info.getDepth(2));
 
         shouldThrow(new NullPointerException(), () -> info.getTimeDiscover(null));
         shouldThrow(new NullPointerException(), () -> info.getTimeVisit(null));
+        shouldThrow(new NullPointerException(), () -> info.getParentOf(null));
+        shouldThrow(new NullPointerException(), () -> info.getDepth(null));
     }
 
     @Test
@@ -452,14 +458,14 @@ public class TestGraph {
          * 3  <-  5  ->  4      8
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -503,12 +509,31 @@ public class TestGraph {
             assertEquals(verticesDiscovered[integer.get()], vertexInfo.vertex);
             integer.incrementAndGet();
         });
+        
         integer.set(0);
         int[] visitTime = {4, 7, 8, 9, 10, 11};
         String[] verticesVisited = {"3", "6", "4", "5", "2", "1"};
         visitDFS.forEachVisited(vertexInfo -> {
             assertEquals(visitTime[integer.get()], vertexInfo.timeVisited);
             assertEquals(verticesVisited[integer.get()], vertexInfo.vertex);
+            integer.incrementAndGet();
+        });
+        
+        String[] vertices = {"1", "2", "5", "3", "3", "4", "6", "6", "4", "5", "2", "1"};
+        boolean[] found = new boolean[graph.size()];
+        integer.set(0);
+        visitDFS.forEach(vertexInfo -> {
+        	int i = integer.get();
+        	assertEquals(vertices[i], vertexInfo.vertex, "Iter " + i);
+        	int vert = Integer.parseInt(vertexInfo.vertex); 
+        	
+        	if(found[vert])
+        		assertEquals(i, vertexInfo.timeVisited, "Iter " + i);
+        	else {
+        		assertEquals(i, vertexInfo.timeDiscovered, "Iter " + i);
+        		found[vert] = true;
+        	}
+        	
             integer.incrementAndGet();
         });
 
@@ -542,14 +567,14 @@ public class TestGraph {
          * 3  <-  5  ->  4      8
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -564,7 +589,7 @@ public class TestGraph {
         Set<String> vertices = new HashSet<>();
         
         Iterator<String> iter = graph.iterator();
-        assertTrue("This should not be null!", iter != null);
+        assertNotNull(iter, "This should not be null!");
         while (iter.hasNext())
             vertices.add(iter.next());
         shouldContain(vertices, "1", "2", "3", "4", "5", "6", "7", "8");
@@ -591,12 +616,12 @@ public class TestGraph {
          * 3  <-> 5  ->  4
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -619,14 +644,14 @@ public class TestGraph {
          * 3  <-  5  ->  4      8
          */
         before();
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -656,12 +681,12 @@ public class TestGraph {
         assertFalse(graph.isCyclic());
         assertTrue(graph.isDAG());
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
 
         assertFalse(graph.isCyclic());
         assertTrue(graph.isDAG());
@@ -687,12 +712,12 @@ public class TestGraph {
          * 3  <-  5  ->  4
          */
         before();
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
 
         assertFalse(graph.isCyclic());
         assertTrue(graph.isDAG());
@@ -733,14 +758,14 @@ public class TestGraph {
          * 3  <-  5  ->  4      8
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -752,7 +777,7 @@ public class TestGraph {
         graph.addEdge("7", "8", 8);
 
         Graph<String, Integer> transposed = graph.transpose();
-        assertTrue("This should not be null!", transposed != null);
+        assertNotNull(transposed, "This should not be null!");
 
         DFS<String, Integer> dfs = new DFS<>();
         VisitInfo<String> visitDFS = transposed.visit("6", dfs, null);
@@ -795,12 +820,12 @@ public class TestGraph {
          * 3  ->  5  ->  4
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -826,14 +851,14 @@ public class TestGraph {
          * 3  <-  5  ->  4      8
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 10);
@@ -845,7 +870,7 @@ public class TestGraph {
         graph.addEdge("7", "8", 8);
 
         List<Edge<String, Integer>> distance = graph.distance("1", "6");
-        assertTrue("This should not be null!", distance != null);
+        assertNotNull(distance, "This should not be null!");
         int sum = distance.stream().mapToInt(Edge::getWeight).sum();
         assertEquals(13, sum);
         shouldContainInOrder(distance,
@@ -885,14 +910,14 @@ public class TestGraph {
          * 3  <-  5  ->  4  ->  8
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 10);
@@ -905,7 +930,7 @@ public class TestGraph {
         graph.addEdge("7", "8", 8);
 
         Map<String, List<Edge<String, Integer>>> distance = graph.distance("1");
-        assertTrue("This should not be null!", distance != null);
+        assertNotNull(distance, "This should not be null!");
         assertNull(distance.get("1"));
         shouldContainInOrder(distance.get("2"),
                 new Edge<>("1", "2", 1));
@@ -945,14 +970,14 @@ public class TestGraph {
          * 3  <-  5  ->  4      8
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -1094,7 +1119,7 @@ public class TestGraph {
     @Test
     public void subGraph() {
         /*
-         * This graph should be like this
+         * This graph should look like this
          *
          * 1  ->  2  <-  6      7
          *               ^      ^
@@ -1103,14 +1128,14 @@ public class TestGraph {
          * 3  <-  5  ->  4      8
          */
 
-        graph.addVertexIfAbsent("1");
-        graph.addVertexIfAbsent("2");
-        graph.addVertexIfAbsent("3");
-        graph.addVertexIfAbsent("4");
-        graph.addVertexIfAbsent("5");
-        graph.addVertexIfAbsent("6");
-        graph.addVertexIfAbsent("7");
-        graph.addVertexIfAbsent("8");
+        graph.addIfAbsent("1");
+        graph.addIfAbsent("2");
+        graph.addIfAbsent("3");
+        graph.addIfAbsent("4");
+        graph.addIfAbsent("5");
+        graph.addIfAbsent("6");
+        graph.addIfAbsent("7");
+        graph.addIfAbsent("8");
 
         graph.addEdge("1", "2", 1);
         graph.addEdge("1", "3", 1);
@@ -1140,7 +1165,7 @@ public class TestGraph {
         graph.mark("4", "z");
 
         Graph<String, Integer> sub = graph.subGraph("1", -541);
-        assertTrue("This should not be null!", sub != null);
+        assertNotNull(sub, "This should not be null!");
         shouldContain(sub.vertices(), "1");
         shouldContain(sub.edges());
 
@@ -1222,7 +1247,8 @@ public class TestGraph {
         sub = graph.subGraph();
         shouldContain(sub.vertices(), "7", "8");
         shouldContain(sub.edges(), new Edge<>("8", "7", 9));
-        
+
+        //noinspection ConfusingArgumentToVarargsMethod
         sub = graph.subGraph(null);
         shouldContain(sub.vertices(), "7", "8");
         shouldContain(sub.edges(), new Edge<>("8", "7", 9));
@@ -1233,31 +1259,31 @@ public class TestGraph {
         Vertex<String> vertex = new Vertex<>(graph, "stronzo");
 
         assertEquals("stronzo", vertex.getValue());
-        assertEquals(0, graph.numberOfVertices());
+        assertEquals(0, graph.size());
 
-        shouldThrow(unsuppException, () -> vertex.addChild(null, null));
-        shouldThrow(unsuppException, () -> vertex.mark(null));
-        shouldThrow(unsuppException, () -> vertex.removeChild(null));
-        shouldThrow(unsuppException, () -> vertex.visit(null, null));
-        shouldThrow(unsuppException, vertex::unMark);
-        shouldThrow(unsuppException, vertex::getAncestors);
-        shouldThrow(unsuppException, vertex::getChildren);
-        shouldThrow(unsuppException, vertex::getEdgesOut);
-        shouldThrow(unsuppException, vertex::getEdgesIn);
-        shouldThrow(unsuppException, vertex::getChildrenAsVertex);
-        shouldThrow(unsuppException, vertex::getAncestorsAsVertex);
-        shouldThrow(unsuppException, vertex::getMarks);
+        shouldThrow(unSuppException, () -> vertex.addChild(null, null));
+        shouldThrow(unSuppException, () -> vertex.mark(null));
+        shouldThrow(unSuppException, () -> vertex.removeChild(null));
+        shouldThrow(unSuppException, () -> vertex.visit(null, null));
+        shouldThrow(unSuppException, vertex::unMark);
+        shouldThrow(unSuppException, vertex::getAncestors);
+        shouldThrow(unSuppException, vertex::getChildren);
+        shouldThrow(unSuppException, vertex::getEdgesOut);
+        shouldThrow(unSuppException, vertex::getEdgesIn);
+        shouldThrow(unSuppException, vertex::getChildrenAsVertex);
+        shouldThrow(unSuppException, vertex::getAncestorsAsVertex);
+        shouldThrow(unSuppException, vertex::getMarks);
 
         vertex.addIfAbsent();
-        assertEquals(1, graph.numberOfVertices());
+        assertEquals(1, graph.size());
         vertex.addIfAbsent();
-        assertEquals(1, graph.numberOfVertices());
+        assertEquals(1, graph.size());
         vertex.addIfAbsent();
-        assertEquals(1, graph.numberOfVertices());
+        assertEquals(1, graph.size());
 
-        assertEquals(vertex, graph.getVertex("stronzo"));
-        shouldThrow(nullException, () -> graph.getVertex(null));
-        shouldThrow(notException, () -> graph.getVertex("stronzo1"));
+        assertEquals(vertex, graph.get("stronzo"));
+        shouldThrow(nullException, () -> graph.get(null));
+        shouldThrow(notException, () -> graph.get("stronzo1"));
 
         shouldThrow(nullException, () -> vertex.addChild(null, 3));
         shouldThrow(nullException, () -> vertex.addChild(null, null));
@@ -1277,9 +1303,9 @@ public class TestGraph {
         shouldContain(vertex.getEdgesIn());
         shouldContain(vertex.getEdgesOut());
 
-        graph.addVertex("1");
-        graph.addVertex("2");
-        graph.addVertex("3");
+        graph.add("1");
+        graph.add("2");
+        graph.add("3");
 
         graph.addEdge("1", "2", 2);
         graph.addEdge("3", "stronzo", 6);
@@ -1330,23 +1356,23 @@ public class TestGraph {
         vertex.remove();
         assertFalse(vertex.isStillContained());
         assertFalse(graph.contains(vertex.getValue()));
-        assertEquals(3, graph.numberOfVertices());
+        assertEquals(3, graph.size());
 
-        shouldThrow(unsuppException, () -> vertex.addChild(null, null));
-        shouldThrow(unsuppException, () -> vertex.mark(null));
-        shouldThrow(unsuppException, () -> vertex.removeChild(null));
-        shouldThrow(unsuppException, () -> vertex.visit(null, null));
-        shouldThrow(unsuppException, vertex::unMark);
-        shouldThrow(unsuppException, vertex::getAncestors);
-        shouldThrow(unsuppException, vertex::getChildren);
-        shouldThrow(unsuppException, vertex::getEdgesOut);
-        shouldThrow(unsuppException, vertex::getEdgesIn);
-        shouldThrow(unsuppException, vertex::getChildrenAsVertex);
-        shouldThrow(unsuppException, vertex::getAncestorsAsVertex);
-        shouldThrow(unsuppException, vertex::getMarks);
+        shouldThrow(unSuppException, () -> vertex.addChild(null, null));
+        shouldThrow(unSuppException, () -> vertex.mark(null));
+        shouldThrow(unSuppException, () -> vertex.removeChild(null));
+        shouldThrow(unSuppException, () -> vertex.visit(null, null));
+        shouldThrow(unSuppException, vertex::unMark);
+        shouldThrow(unSuppException, vertex::getAncestors);
+        shouldThrow(unSuppException, vertex::getChildren);
+        shouldThrow(unSuppException, vertex::getEdgesOut);
+        shouldThrow(unSuppException, vertex::getEdgesIn);
+        shouldThrow(unSuppException, vertex::getChildrenAsVertex);
+        shouldThrow(unSuppException, vertex::getAncestorsAsVertex);
+        shouldThrow(unSuppException, vertex::getMarks);
 
         vertex.addIfAbsent();
-        assertEquals(4, graph.numberOfVertices());
+        assertEquals(4, graph.size());
     }
 
     @Test
@@ -1401,33 +1427,35 @@ public class TestGraph {
     	marks.put("6", new HashSet<>(temp));
     	temp.clear();
     	
-        graph.addAllVertices(vertices);
+        graph.addAll(vertices);
         graph.addAllEdges(edges);
         marks.forEach((v, m) -> m.forEach(mk -> graph.mark(v, mk)));
+        GraphSaveStructure<String, Integer> struct = new GraphSaveStructure<>();
         
         try {
-			Graph.save(graph, fileName);
-			Graph.load(graph, fileName, String.class, Integer.class);
+            struct.save(graph, fileName);
+            struct.load(graph, fileName, String.class, Integer.class);
 			shouldContain(graph.vertices(), vertices.toArray());
 			shouldContain(graph.edges(), edges.toArray());
 			//marks.forEach((v, m) -> shouldContain(graph.getMarks(v), m.toArray()));
 			
-			graph.removeAllVertex();
-			Graph.load(graph, fileName, String.class, Integer.class);
+			graph.removeAll();
+			struct.load(graph, fileName, String.class, Integer.class);
 			shouldContain(graph.vertices(), vertices.toArray());
 			shouldContain(graph.edges(), edges.toArray());
 			//marks.forEach((v, m) -> shouldContain(graph.getMarks(v), m.toArray()));
 		} catch (Exception e) {
+            e.printStackTrace(System.err);
 			fail(e.getMessage());
 		}
         
 
         try {
-			Graph.load(graph, "sadadafacensi", String.class, Integer.class);
+			struct.load(graph, "sadadafacensi", String.class, Integer.class);
 			fail("Should have been thrown IOException");
-		} catch (Exception ignore) {
-			if (!(ignore instanceof IOException))
-				fail("Should have been thrown IOException " + ignore.getMessage());
+		} catch (Exception e) {
+			if (!(e instanceof IOException))
+				fail("Should have been thrown IOException " + e.getMessage());
 		}
         
 		shouldContain(graph.vertices(), vertices.toArray());
@@ -1435,16 +1463,16 @@ public class TestGraph {
 		//marks.forEach((v, m) -> shouldContain(graph.getMarks(v), m.toArray()));
         
         try {
-			Graph.load(graph, fileName + ".fail", String.class, Integer.class);
+			struct.load(graph, fileName + ".fail", String.class, Integer.class);
 			fail("Should have been thrown JsonSyntaxException");
-		} catch (Exception ignore) {
-			if (!(ignore instanceof JsonSyntaxException))
-				fail("Should have been thrown JsonSyntaxException " + ignore.getMessage());
+		} catch (Exception e) {
+			if (!(e instanceof JsonSyntaxException))
+				fail("Should have been thrown JsonSyntaxException " + e.getMessage());
 		}
         
 		graph = null;
 		shouldThrow(new NullPointerException(), () -> { try {
-			Graph.load(graph, fileName, String.class, Integer.class);
+			struct.load(graph, fileName, String.class, Integer.class);
 		} catch (IOException e) {
 			fail();
 			e.printStackTrace();
@@ -1454,28 +1482,29 @@ public class TestGraph {
     
 
     private void shouldContain(Collection<?> actual, Object... expected) {
-    	assertTrue("You should pass me a collection!", actual != null);
-        assertEquals("They have not the same number of elements\nActual: " + actual, expected.length, actual.size());
+        assertNotNull(actual, "You should pass me a collection!");
+        assertEquals(expected.length, actual.size(), "They have not the same number of elements\nActual: " + actual);
 
         for (Object obj : expected)
-            assertTrue("Not containing: [" + obj + "]\nBut has: " + actual, actual.contains(obj));
+            assertTrue(actual.contains(obj), "Not containing: [" + obj + "]\nBut has: " + actual);
     }
 
     private void shouldContainInOrder(List<?> actual, Object... expected) {
-    	assertTrue("You should pass me a list!", actual != null);
-        assertEquals("They have not the same number of elements\nActual: " + actual, expected.length, actual.size());
+        assertNotNull(actual, "You should pass me a list!");
+        assertEquals(expected.length, actual.size(), "They have not the same number of elements\nActual: " + actual);
 
         for (int i = 0; i < actual.size(); i++)
-            assertEquals("Index: " + i, expected[i], actual.get(i));
+            assertEquals(expected[i], actual.get(i), "Index: " + i);
     }
 
     private void shouldThrow(Exception expected, Runnable runnable) {
         try {
             runnable.run();
-            fail("It has't thrown: " + expected.getClass().getSimpleName());
+            fail("It hasn't thrown: " + expected.getClass().getSimpleName());
         } catch (Exception actual) {
             assertEquals(expected.getClass(), actual.getClass());
-            assertEquals(expected.getMessage(), actual.getMessage());
+            if(expected.getMessage()!=null)
+                assertEquals(expected.getMessage(), actual.getMessage());
         }
     }
 }

@@ -1,8 +1,8 @@
 package berack96.lib.graph.view.vertex;
 
-import java.awt.*;
-
 import berack96.lib.graph.view.GraphicalView;
+
+import java.awt.*;
 
 public class VertexView<V> implements GraphicalView<VertexComponent<V>> {
 
@@ -23,7 +23,7 @@ public class VertexView<V> implements GraphicalView<VertexComponent<V>> {
         boolean discovered = obj.vertex.getMarks().contains("discovered");
         boolean visited = obj.vertex.getMarks().contains("visited");
         boolean selected = obj.vertex.getMarks().contains("selected");
-
+        
         FontMetrics metrics = obj.getFontMetrics(FONT);
         int stringPixels = metrics.stringWidth(obj.vertex.getValue().toString());
         int size = Math.max(stringPixels, metrics.getHeight()) + 2 * PADDING;

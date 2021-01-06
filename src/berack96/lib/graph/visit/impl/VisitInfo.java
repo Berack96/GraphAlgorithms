@@ -1,9 +1,9 @@
 package berack96.lib.graph.visit.impl;
 
+import berack96.lib.graph.visit.VisitStrategy;
+
 import java.util.*;
 import java.util.function.Consumer;
-
-import berack96.lib.graph.visit.VisitStrategy;
 
 /**
  * The class used for getting the info of the visit.<br>
@@ -13,9 +13,9 @@ import berack96.lib.graph.visit.VisitStrategy;
  * @author Berack96
  */
 public class VisitInfo<V> {
-    private final Map<V, Long> discovered;
-    private final Map<V, Long> visited;
-    private final Map<V, V> parent;
+    private static final int NOT_SET = -1;
+    
+    private final Map<V, VertexInfo> vertices;
     private final V source;
     private long time;
 
@@ -29,116 +29,10 @@ public class VisitInfo<V> {
         if (source == null)
             throw new NullPointerException();
 
-        discovered = new Hashtable<>();
-        visited = new Hashtable<>();
-        parent = new Hashtable<>();
-
+        this.vertices = new Hashtable<>();
         this.time = 0;
         this.source = source;
         setDiscovered(source);
-    }
-
-    /**
-     * The time of the vertex when it is discovered in the visit.<br>
-     * For "discovered" i mean when the node is first found by the visit algorithm. It may depends form {@link VisitStrategy}<br>
-     * The time starts at 0 and for each vertex discovered it is increased by one. If a vertex is visited it also increase the time<br>
-     *
-     * @param vertex the vertex needed
-     * @return the time of it's discovery
-     * @throws IllegalArgumentException if the vertex is not discovered
-     * @throws NullPointerException     if the vertex is null
-     */
-    public long getTimeDiscover(V vertex) throws IllegalArgumentException, NullPointerException {
-        Long time = discovered.get(vertex);
-        if (time == null)
-            throw new IllegalArgumentException();
-        return time;
-    }
-
-    /**
-     * The time when the vertex is visited by the algorithm<br>
-     * For "visited" i mean when the node is finally visited by the visit algorithm. It may depends form {@link VisitStrategy}<br>
-     * The time starts at 0 and for each vertex discovered or visited is increased by one<br>
-     *
-     * @param vertex the vertex needed
-     * @return the time of it's visit
-     * @throws IllegalArgumentException if the vertex is not visited
-     * @throws NullPointerException     if the vertex is null
-     */
-    public long getTimeVisit(V vertex) throws IllegalArgumentException, NullPointerException {
-        Long time = visited.get(vertex);
-        if (time == null)
-            throw new IllegalArgumentException();
-        return time;
-    }
-
-    /**
-     * Tells if a vertex is discovered or not
-     *
-     * @param vertex the vertex chosen
-     * @return true if is discovered
-     */
-    public boolean isDiscovered(V vertex) throws NullPointerException {
-        try {
-            return discovered.containsKey(vertex);
-        } catch (NullPointerException e) {
-            return false;
-        }
-    }
-
-    /**
-     * Tells if the vertex is visited or not
-     *
-     * @param vertex the vertex chosen
-     * @return true if is visited
-     */
-    public boolean isVisited(V vertex) throws NullPointerException {
-        try {
-            return visited.containsKey(vertex);
-        } catch (NullPointerException e) {
-            return false;
-        }
-    }
-
-    /**
-     * Set a vertex as "visited". After this call the vertex is set as discovered (if not already) and visited.<br>
-     * Next this call it will be possible to get the time of visit of that vertex<br>
-     * Does nothing if the vertex is already been visited.
-     *
-     * @param vertex the vertex that has been visited
-     */
-    synchronized void setVisited(V vertex) {
-        setDiscovered(vertex);
-        if (!visited.containsKey(vertex))
-            visited.put(vertex, time++);
-    }
-
-    /**
-     * Set a vertex as "discovered". After this call the vertex is set as discovered and it will be possible to get the time of it's discovery<br>
-     * Does nothing if the vertex is already been discovered.
-     *
-     * @param vertex the vertex that has been discovered
-     */
-    synchronized void setDiscovered(V vertex) {
-        if (!discovered.containsKey(vertex))
-            discovered.put(vertex, time++);
-    }
-
-    /**
-     * Set the parent of a particular vertex<br>
-     * The parent of a vertex is the one that has discovered it<br>
-     * If the target vertex is not already discovered, then {@link #setDiscovered(Object)} is called<br>
-     *
-     * @param parent the vertex that is the parent
-     * @param child  the vertex discovered
-     * @throws IllegalArgumentException if the parent is not already discovered
-     */
-    synchronized void setParent(V parent, V child) throws IllegalArgumentException {
-        if (!isDiscovered(parent))
-            throw new IllegalArgumentException(parent.toString());
-
-        setDiscovered(child);
-        this.parent.putIfAbsent(child, parent);
     }
 
     /**
@@ -157,13 +51,148 @@ public class VisitInfo<V> {
      *
      * @param vertex the child vertex
      * @return the parent of the child
-     * @throws IllegalArgumentException if the vertex has not been discovered yet
+     * @throws IllegalArgumentException if the vertex has not been discovered yet or is null
      */
     public V getParentOf(V vertex) throws IllegalArgumentException {
-        if (isDiscovered(vertex))
-            return parent.get(vertex);
+        VertexInfo info = vertices.get(vertex);
+        if (!isDiscovered(vertex))
+        	throw new IllegalArgumentException();
+        return info.parent;
+    }
+    
+    /**
+     * The time of the vertex when it is discovered in the visit.<br>
+     * For "discovered" i mean when the node is first found by the visit algorithm. It may depends form {@link VisitStrategy}<br>
+     * The time starts at 0 and for each vertex discovered it is increased by one. If a vertex is visited it also increase the time<br>
+     *
+     * @param vertex the vertex needed
+     * @return the time of it's discovery
+     * @throws IllegalArgumentException if the vertex is not discovered
+     * @throws NullPointerException     if the vertex is null
+     */
+    public long getTimeDiscover(V vertex) throws IllegalArgumentException, NullPointerException {
+    	VertexInfo info = vertices.get(vertex);
+    	long time = (info == null) ? NOT_SET : info.timeDiscovered;
+    	
+    	if(time == NOT_SET)
+    		throw new IllegalArgumentException();
+        return time;
+    }
 
-        throw new IllegalArgumentException();
+    /**
+     * The time when the vertex is visited by the algorithm<br>
+     * For "visited" i mean when the node is finally visited by the visit algorithm. It may depends form {@link VisitStrategy}<br>
+     * The time starts at 0 and for each vertex discovered or visited is increased by one<br>
+     *
+     * @param vertex the vertex needed
+     * @return the time of it's visit
+     * @throws IllegalArgumentException if the vertex is not visited
+     * @throws NullPointerException     if the vertex is null
+     */
+    public long getTimeVisit(V vertex) throws IllegalArgumentException, NullPointerException {
+    	VertexInfo info = vertices.get(vertex);
+    	long time = (info == null) ? NOT_SET : info.timeVisited;
+    	
+    	if(time == NOT_SET)
+    		throw new IllegalArgumentException();
+        return time;
+    }
+
+    /**
+     * The depth of the vertex when it was first discovered. 
+     *
+     * @param vertex the vertex needed
+     * @return the depth of it's discovery
+     * @throws IllegalArgumentException if the vertex is not discovered
+     * @throws NullPointerException     if the vertex is null
+     */
+    public long getDepth(V vertex) throws IllegalArgumentException, NullPointerException {
+    	VertexInfo info = vertices.get(vertex);
+    	long depth = (info == null) ? NOT_SET : info.depth;
+    	
+    	if(depth == NOT_SET)
+    		throw new IllegalArgumentException();
+        return depth;
+    }
+
+    /**
+     * Tells if a vertex is discovered or not
+     *
+     * @param vertex the vertex chosen
+     * @return true if is discovered
+     */
+    public boolean isDiscovered(V vertex) throws NullPointerException {
+        try {
+            return vertices.get(vertex).timeDiscovered != NOT_SET;
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Tells if the vertex is visited or not
+     *
+     * @param vertex the vertex chosen
+     * @return true if is visited
+     */
+    public boolean isVisited(V vertex) throws NullPointerException {
+        try {
+        	return vertices.get(vertex).timeVisited != NOT_SET;
+        } catch (NullPointerException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Set a vertex as "visited". After this call the vertex is set as discovered (if not already) and visited.<br>
+     * Next this call it will be possible to get the time of visit of that vertex<br>
+     * Does nothing if the vertex has already been visited.
+     *
+     * @param vertex the vertex that has been visited
+     */
+    synchronized void setVisited(V vertex) {
+        setDiscovered(vertex);
+        VertexInfo info = vertices.get(vertex);
+        if(info.timeVisited != NOT_SET)
+        	return;
+        
+        info.timeVisited = time;
+        time++;
+    }
+
+    /**
+     * Set a vertex as "discovered". After this call the vertex is set as discovered and it will be possible to get the time of it's discovery<br>
+     * Does nothing if the vertex has already been discovered.
+     *
+     * @param vertex the vertex that has been discovered
+     */
+    synchronized void setDiscovered(V vertex) {
+		VertexInfo info = vertices.computeIfAbsent(vertex, (v) -> new VertexInfo(vertex));
+    	if(info.timeDiscovered != NOT_SET)
+        	return;
+        
+        info.timeDiscovered = time;
+        info.depth = 0;
+        time++;
+    }
+
+    /**
+     * Set the parent of a particular vertex<br>
+     * The parent of a vertex is the one that has discovered it<br>
+     * If the target vertex is not already discovered, then {@link #setDiscovered(Object)} is called<br>
+     *
+     * @param parent the vertex that is the parent
+     * @param child  the vertex discovered
+     * @throws IllegalArgumentException if the parent is not already discovered
+     */
+    synchronized void setParent(V parent, V child) throws IllegalArgumentException {
+        if (!isDiscovered(parent))
+            throw new IllegalArgumentException(parent.toString());
+
+        setDiscovered(child);
+        VertexInfo info = vertices.get(child);
+		info.parent = parent;
+		info.depth = vertices.get(parent).depth + 1;
     }
 
     /**
@@ -172,7 +201,12 @@ public class VisitInfo<V> {
      * @return the visited vertices
      */
     public Set<V> getVisited() {
-        return visited.keySet();
+    	Set<V> visited = new HashSet<>(vertices.size());
+    	vertices.forEach((vert, info) -> {
+    		if(info.timeVisited != NOT_SET)
+    			visited.add(vert);
+    	});
+        return visited;
     }
 
     /**
@@ -181,7 +215,12 @@ public class VisitInfo<V> {
      * @return the discovered vertices
      */
     public Set<V> getDiscovered() {
-        return discovered.keySet();
+    	Set<V> discovered = new HashSet<>(vertices.size());
+    	vertices.forEach((vert, info) -> {
+    		if(info.timeDiscovered != NOT_SET)
+    			discovered.add(vert);
+    	});
+        return discovered;
     }
 
     /**
@@ -191,10 +230,11 @@ public class VisitInfo<V> {
      * @param consumer the function to apply to each
      */
     public void forEachDiscovered(Consumer<VertexInfo> consumer) {
-        Set<V> vertices = getDiscovered();
         Queue<VertexInfo> queue = new PriorityQueue<>();
-
-        vertices.forEach((vertex) -> queue.offer(new VertexInfo(vertex, getParentOf(vertex), getTimeDiscover(vertex), isVisited(vertex) ? getTimeVisit(vertex) : -1, false)));
+        vertices.forEach((v, info) -> { 
+        	if(info.timeDiscovered != NOT_SET)
+        		queue.offer(new VertexInfo(info, false));
+        });
 
         while (!queue.isEmpty())
             consumer.accept(queue.poll());
@@ -207,10 +247,11 @@ public class VisitInfo<V> {
      * @param consumer the function to apply to each
      */
     public void forEachVisited(Consumer<VertexInfo> consumer) {
-        Set<V> vertices = getVisited();
         Queue<VertexInfo> queue = new PriorityQueue<>();
-
-        vertices.forEach((vertex) -> queue.offer(new VertexInfo(vertex, getParentOf(vertex), getTimeDiscover(vertex), getTimeVisit(vertex), true)));
+        vertices.forEach((v, info) -> { 
+        	if(info.timeVisited != NOT_SET)
+        		queue.offer(new VertexInfo(info, true));
+        });
 
         while (!queue.isEmpty())
             consumer.accept(queue.poll());
@@ -223,46 +264,70 @@ public class VisitInfo<V> {
      * @param consumer the function to apply at each vertex
      */
     public void forEach(Consumer<VertexInfo> consumer) {
-        Set<V> discovered = getDiscovered();
-        Set<V> visited = getVisited();
         Queue<VertexInfo> queue = new PriorityQueue<>();
-
-        discovered.forEach((vertex) -> queue.offer(new VertexInfo(vertex, getParentOf(vertex), getTimeDiscover(vertex), getTimeVisit(vertex), false)));
-        visited.forEach((vertex) -> queue.offer(new VertexInfo(vertex, getParentOf(vertex), getTimeDiscover(vertex), getTimeVisit(vertex), true)));
-
+        vertices.forEach((v, info) -> { 
+        	if(info.timeDiscovered != NOT_SET)
+        		queue.offer(new VertexInfo(info, false));
+        	if(info.timeVisited != NOT_SET)
+        		queue.offer(new VertexInfo(info, true));
+        });
+        
         while (!queue.isEmpty())
             consumer.accept(queue.remove());
     }
-
+    
     /**
      * Class used mainly for storing the data of the visit
      */
     public class VertexInfo implements Comparable<VertexInfo> {
-        public final V vertex;
-        public final V parent;
-        public final long timeDiscovered;
-        public final long timeVisited;
+		public V vertex;
+        public V parent;
+        public long timeDiscovered;
+        public long timeVisited;
+        public long depth;
         private final boolean compareVisited;
 
-        private VertexInfo(V vertex, V parent, long timeDiscovered, long timeVisited, boolean compareVisited) {
-            this.vertex = vertex;
-            this.parent = parent;
-            this.timeDiscovered = timeDiscovered;
-            this.timeVisited = timeVisited;
-            this.compareVisited = compareVisited;
+        private VertexInfo(V vertex) {
+			this.vertex = vertex;
+            this.timeDiscovered = NOT_SET;
+            this.timeVisited = NOT_SET;
+            this.depth = NOT_SET;
+            this.compareVisited = false;
+        }
+        
+        private VertexInfo(VertexInfo info, boolean compare) {
+            this.vertex = info.vertex;
+            this.parent = info.parent;
+            this.timeDiscovered = info.timeDiscovered;
+            this.timeVisited = info.timeVisited;
+            this.depth = info.depth;
+            this.compareVisited = compare;
+        }
+
+        @Override
+        public int hashCode() {
+            return toString().hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            try {
+            	return obj instanceof VisitInfo.VertexInfo && obj.toString().equals(toString());
+            } catch (Exception e) {
+                return false;
+            }
         }
 
         @Override
         public int compareTo(VertexInfo other) {
             long compareThis = compareVisited ? timeVisited : timeDiscovered;
             long compareOther = other.compareVisited ? other.timeVisited : other.timeDiscovered;
-
             return (int) (compareThis - compareOther);
         }
 
         @Override
         public String toString() {
-            return String.format("%s -> %s [D:%3d, V:%3d]", parent, vertex, timeDiscovered, timeVisited);
+            return String.format("%s -> %s (%3d) [D:%3d, V:%3d]", parent, vertex, depth, timeDiscovered, timeVisited);
         }
     }
 }

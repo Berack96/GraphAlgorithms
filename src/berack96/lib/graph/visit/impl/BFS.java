@@ -1,10 +1,10 @@
 package berack96.lib.graph.visit.impl;
 
-import java.util.LinkedList;
-import java.util.function.Consumer;
-
 import berack96.lib.graph.Graph;
 import berack96.lib.graph.visit.VisitStrategy;
+
+import java.util.LinkedList;
+import java.util.function.Consumer;
 
 /**
  * Breadth-first search<br>
@@ -29,7 +29,7 @@ public class BFS<V, W extends Number> implements VisitStrategy<V, W> {
         while (!toVisitChildren.isEmpty()) {
             V current = toVisitChildren.removeFirst();
 
-            for (V child : graph.getChildren(current))
+            for (V child : graph.getChildrens(current))
                 if (!info.isDiscovered(child)) {
                     toVisitChildren.addLast(child);
 

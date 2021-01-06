@@ -1,33 +1,23 @@
 package berack96.lib.graph.view;
 
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.GridLayout;
-import java.awt.event.ItemEvent;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.border.BevelBorder;
-
 import berack96.lib.graph.Graph;
 import berack96.lib.graph.view.edge.EdgeListener;
 import berack96.lib.graph.view.vertex.VertexListener;
 import berack96.lib.graph.visit.VisitStrategy;
 
+import javax.swing.*;
+import javax.swing.border.BevelBorder;
+import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.io.IOException;
+import java.io.Serial;
+import java.util.List;
+import java.util.*;
+
 public class GraphInfo<V, W extends Number> extends JPanel {
 
-	private static final long serialVersionUID = 1L;
+	@Serial
+    private static final long serialVersionUID = 1L;
 	
     private final Map<String, VisitListener<V>> visits;
 
@@ -43,7 +33,7 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         
         /* FIRST (GRAPH INFO) */
 
-        JLabel vNumber = new JLabel(String.valueOf(graphPanel.getGraph().numberOfVertices()));
+        JLabel vNumber = new JLabel(String.valueOf(graphPanel.getGraph().size()));
         JLabel eNumber = new JLabel(String.valueOf(graphPanel.getGraph().numberOfEdges()));
         JLabel gCyclic = new JLabel(String.valueOf(graphPanel.getGraph().isCyclic()));
 
@@ -194,7 +184,7 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         graphPanel.addObserver((o, arg) -> {
             Graph<V, W> graph = graphPanel.getGraph();
             if(arg.equals(graph)) {
-                vNumber.setText(String.valueOf(graph.numberOfVertices()));
+                vNumber.setText(String.valueOf(graph.size()));
                 eNumber.setText(String.valueOf(graph.numberOfEdges()));
                 gCyclic.setText(String.valueOf(graph.isCyclic()));
                 

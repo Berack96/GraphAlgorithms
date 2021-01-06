@@ -1,11 +1,11 @@
 package berack96.lib.graph.visit.impl;
 
-import java.util.*;
-import java.util.function.Consumer;
-
 import berack96.lib.graph.Graph;
 import berack96.lib.graph.visit.VisitSCC;
 import berack96.lib.graph.visit.VisitTopological;
+
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Class that implements the Tarjan algorithm and uses it for getting the SCC and the topological sort
@@ -61,7 +61,7 @@ public class Tarjan<V, W extends Number> implements VisitSCC<V, W>, VisitTopolog
                 strongConnect(graph, vertex, index, visit);
         }
 
-        topologicalSort = (graph.numberOfVertices() == SCC.size()) ? new ArrayList<>(topologicalSort) : null;
+        topologicalSort = (graph.size() == SCC.size()) ? new ArrayList<>(topologicalSort) : null;
         return info;
     }
 
@@ -74,7 +74,7 @@ public class Tarjan<V, W extends Number> implements VisitSCC<V, W>, VisitTopolog
         info.setDiscovered(vertex);
 
         // Consider successors of v
-        for (V child : graph.getChildren(vertex)) {
+        for (V child : graph.getChildrens(vertex)) {
             if (!indices.containsKey(child)) {
                 info.setParent(vertex, child);
                 strongConnect(graph, child, index, visit);

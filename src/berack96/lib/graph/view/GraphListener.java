@@ -16,12 +16,12 @@ public interface GraphListener extends MouseListener, MouseMotionListener, KeyLi
 	 * This function is called when the listener is removed to the graph.
 	 * Here you could remove any other thing that you have done.
 	 */
-	public void remove();
+	void remove();
 	
 	/**
 	 * Get the description of this listener, in a way to interact with the user.
 	 * 
 	 * @return a string describing the functionalities of this listener
 	 */
-	public String getDescription();
+	String getDescription();
 }

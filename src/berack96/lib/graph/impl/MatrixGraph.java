@@ -1,319 +1,132 @@
 package berack96.lib.graph.impl;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
-
 import berack96.lib.graph.Edge;
 import berack96.lib.graph.Graph;
-import berack96.lib.graph.Vertex;
-import berack96.lib.graph.visit.VisitStrategy;
-import berack96.lib.graph.visit.impl.VisitInfo;
 
-public class MatrixGraph<V, W extends Number> implements Graph<V, W> {
+import java.util.*;
+
+/**
+ * An implementation of the graph using a matrix for representing the edges
+ *
+ * @param <V> the vertex
+ * @param <W> the weight
+ * @author Berack96
+ */
+public class MatrixGraph<V, W extends Number> extends AGraph<V, W> {
+
+	final Map<V, Integer> map = new HashMap<>();
+	final List<List<W>> matrix = new ArrayList<>();
 
 	@Override
 	public Iterator<V> iterator() {
-		// TODO Auto-generated method stub
-		return null;
+		return map.keySet().iterator();
 	}
 
 	@Override
-	public boolean isCyclic() {
-		// TODO Auto-generated method stub
-		return false;
+	protected Graph<V, W> getNewInstance() {
+		return new MatrixGraph<>();
 	}
 
 	@Override
-	public boolean isDAG() {
-		// TODO Auto-generated method stub
-		return false;
+	protected void addVertex(V vertex) {
+		map.put(vertex, map.size());
+
+		List<W> newVert = new ArrayList<>(map.size());
+		for (int i=0; i<map.size(); i++)
+			newVert.add(null);
+
+		matrix.forEach(list -> list.add(null));
+		matrix.add(newVert);
 	}
 
 	@Override
-	public Vertex<V> getVertex(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
+	protected boolean containsVertex(V vertex) {
+		return map.containsKey(vertex);
 	}
 
 	@Override
-	public void addVertex(V vertex) throws NullPointerException {
-		// TODO Auto-generated method stub
-		
+	protected void removeVertex(V vertex) {
+		int x = map.remove(vertex);
+		map.replaceAll((vert, index) -> index>x? index-1:index);
+
+		matrix.remove(x);
+		matrix.forEach(list -> {
+			int i;
+			for(i=x; i<list.size()-1; i++)
+				list.set(i, list.get(i+1));
+			if(--i>0)
+				list.remove(i);
+		});
 	}
 
 	@Override
-	public boolean addVertexIfAbsent(V vertex) throws NullPointerException {
-		// TODO Auto-generated method stub
-		return false;
+	protected void removeAllVertices() {
+		map.clear();
+		matrix.clear();
 	}
 
 	@Override
-	public void addAllVertices(Collection<V> vertices) throws NullPointerException {
-		// TODO Auto-generated method stub
-		
+	protected boolean containsEdgeImpl(V vertex1, V vertex2) {
+		try {
+			return matrix.get(map.get(vertex1)).get(map.get(vertex2)) != null;
+		} catch (Exception ignore) {
+			return false;
+		}
 	}
 
 	@Override
-	public void removeVertex(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
+	protected W addEdgeImpl(V vertex1, V vertex2, W weight) {
+		return matrix.get(map.get(vertex1)).set(map.get(vertex2), weight);
 	}
 
 	@Override
-	public void removeAllVertex() {
-		// TODO Auto-generated method stub
-		
+	protected W getWeightImpl(V vertex1, V vertex2) {
+		return matrix.get(map.get(vertex1)).get(map.get(vertex2));
 	}
 
 	@Override
-	public boolean contains(V vertex) throws NullPointerException {
-		// TODO Auto-generated method stub
-		return false;
+	protected Collection<Edge<V, W>> getEdgesOutImpl(V vertex) {
+		Set<Edge<V,W>> set = new HashSet<>();
+		Map<Integer, V> inverted = new HashMap<>();
+		map.keySet().forEach(v -> inverted.put(map.get(v), v));
+
+		List<W> list = matrix.get(map.get(vertex));
+		for(int i=0; i<list.size(); i++) {
+			W weight = list.get(i);
+			if (weight != null)
+				set.add(new Edge<>(vertex, inverted.get(i), weight));
+		}
+		return set;
 	}
 
 	@Override
-	public Collection<Object> marks() {
-		// TODO Auto-generated method stub
-		return null;
+	protected Collection<Edge<V, W>> getEdgesInImpl(V vertex) {
+		Set<Edge<V,W>> set = new HashSet<>();
+		Map<Integer, V> inverted = new HashMap<>();
+		map.keySet().forEach(v -> inverted.put(map.get(v), v));
+
+		int x = map.get(vertex);
+		for(int i=0; i<matrix.size(); i++) {
+			W weight = matrix.get(i).get(x);
+			if (weight != null)
+				set.add(new Edge<>(inverted.get(i), vertex, weight));
+		}
+		return set;
 	}
 
 	@Override
-	public void mark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
+	protected void removeEdgeImpl(V vertex1, V vertex2) {
+		matrix.get(map.get(vertex1)).set(map.get(vertex2), null);
 	}
 
 	@Override
-	public void unMark(V vertex, Object mark) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
+	protected void removeAllOutEdgeImpl(V vertex) {
+		matrix.get(map.get(vertex)).replaceAll(var -> null);
 	}
 
 	@Override
-	public void unMark(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
+	protected void removeAllInEdgeImpl(V vertex) {
+		int x = map.get(vertex);
+		matrix.forEach(list -> list.set(x, null));
 	}
-
-	@Override
-	public Collection<V> getMarkedWith(Object mark) throws NullPointerException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<Object> getMarks(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void unMarkAll(Object mark) throws NullPointerException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void unMarkAll() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public W addEdge(V vertex1, V vertex2, W weight) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public W addEdge(Edge<V, W> edge) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public W addEdgeAndVertices(V vertex1, V vertex2, W weight) throws NullPointerException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public W addEdgeAndVertices(Edge<V, W> edge) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void addAllEdges(Collection<Edge<V, W>> edges) throws NullPointerException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public W getWeight(V vertex1, V vertex2) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void removeEdge(V vertex1, V vertex2) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void removeAllInEdge(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void removeAllOutEdge(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void removeAllEdge(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void removeAllEdge() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean containsEdge(V vertex1, V vertex2) throws NullPointerException {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public Collection<V> vertices() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<Edge<V, W>> edges() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<Edge<V, W>> edgesOf(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<Edge<V, W>> getEdgesIn(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<Edge<V, W>> getEdgesOut(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<V> getAncestors(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public int degreeIn(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int degreeOut(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int degree(V vertex) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int numberOfVertices() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public int numberOfEdges() {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public VisitInfo<V> visit(V source, VisitStrategy<V, W> strategy, Consumer<V> visit)
-			throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Graph<V, W> transpose() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<V> topologicalSort() throws UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Collection<Collection<V>> stronglyConnectedComponents() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Graph<V, W> subGraph(V source, int depth) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Graph<V, W> subGraph(Object... marker) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<Edge<V, W>> distance(V source, V destination)
-			throws NullPointerException, IllegalArgumentException, UnsupportedOperationException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 }

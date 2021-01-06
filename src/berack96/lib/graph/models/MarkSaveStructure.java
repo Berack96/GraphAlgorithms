@@ -7,7 +7,6 @@ package berack96.lib.graph.models;
  *
  */
 public class MarkSaveStructure {
-	public MarkSaveStructure() {}
 	protected MarkSaveStructure(String v, Object m) {
 		this.vert = v;
 		this.mark = m;

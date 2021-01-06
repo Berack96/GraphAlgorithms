@@ -1,20 +1,12 @@
 package berack96.lib.graph;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import berack96.lib.graph.visit.VisitStrategy;
+import berack96.lib.graph.visit.impl.VisitInfo;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
-
-import berack96.lib.graph.models.GraphSaveStructure;
-import berack96.lib.graph.visit.VisitStrategy;
-import berack96.lib.graph.visit.impl.VisitInfo;
 
 /**
  * An interface for the graphs.<br>
@@ -27,11 +19,10 @@ import berack96.lib.graph.visit.impl.VisitInfo;
  */
 public interface Graph<V, W extends Number> extends Iterable<V> {
 
-    final String NOT_DAG = "The graph is not a DAG";
-    final String NOT_CONNECTED = "The source vertex doesn't have a path that reach the destination";
-    final String PARAM_NULL = "The parameter must not be null";
-    final String VERTEX_NOT_CONTAINED = "The vertex must be contained in the graph";
-    final Gson GSON = new Gson();
+    String NOT_DAG = "The graph is not a DAG";
+    String NOT_CONNECTED = "The source vertex doesn't have a path that reach the destination";
+    String PARAM_NULL = "The parameter must not be null";
+    String VERTEX_NOT_CONTAINED = "The vertex must be contained in the graph";
     
     /**
      * Tells if the graph has some cycle.<br>
@@ -70,16 +61,16 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @throws NullPointerException     if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained in the graph
      */
-    Vertex<V> getVertex(V vertex) throws NullPointerException, IllegalArgumentException;
+    Vertex<V> get(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
-     * Add the vertex to the graph. If it's already in the graph it will be replaced.<br>
+     * Add the vertex to the graph. If it's already in the graph it will be replaced and all its edges will be resetted.<br>
      * Of course the vertex added will have no edge to any other vertex nor form any other vertex.
      *
      * @param vertex the vertex to add
      * @throws NullPointerException if the vertex is null
      */
-    void addVertex(V vertex) throws NullPointerException;
+    void add(V vertex) throws NullPointerException;
 
     /**
      * Add the specified vertex to the graph only if the graph doesn't contains it.<br>
@@ -89,7 +80,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @return true if the vertex is added, false if the graph contains the vertex and therefore the new one is not added
      * @throws NullPointerException if the vertex is null
      */
-    boolean addVertexIfAbsent(V vertex) throws NullPointerException;
+    boolean addIfAbsent(V vertex) throws NullPointerException;
 
     /**
      * Add all the vertices contained in the collection to the graph.<br>
@@ -99,7 +90,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @param vertices a collection of the vertices to add
      * @throws NullPointerException if the set is null
      */
-    void addAllVertices(Collection<V> vertices) throws NullPointerException;
+    void addAll(Collection<V> vertices) throws NullPointerException;
 
     /**
      * Remove the selected vertex from the graph.<br>
@@ -109,13 +100,13 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @throws NullPointerException if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained
      */
-    void removeVertex(V vertex) throws NullPointerException, IllegalArgumentException;
+    void remove(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Remove all the vertex contained in the graph.<br>
      * After this method's call the graph will be empty; no vertices nor edges.
      */
-    void removeAllVertex();
+    void removeAll();
 
     /**
      * Get all the marks of this graph.<br>
@@ -408,11 +399,11 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * @throws NullPointerException     if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained in the graph
      */
-    Collection<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException;
+    Collection<V> getChildrens(V vertex) throws NullPointerException, IllegalArgumentException;
 
     /**
      * Get all the vertices that have the vertex passed as their child.<br>
-     * Basically is the opposite of {@link #getChildren(Object)}<br>
+     * Basically is the opposite of {@link #getChildrens(Object)}<br>
      * Note: depending on the implementation, modifying the returned collection<br>
      * could affect the graph behavior and the changes could be reflected to the graph.
      *
@@ -462,7 +453,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      *
      * @return the number of vertices
      */
-    int numberOfVertices();
+    int size();
 
     /**
      * Tells how many edges are in the graph.
@@ -500,7 +491,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * A topological ordering of a graph is a linear ordering of its vertices such that for
      * every directed edge (V1, V2) from vertex V1 to vertex V2, V2 comes before V1 in the ordering.
      *
-     * @return an array containing the topological order of the vertices
+     * @return a list containing the topological order of the vertices
      * @throws UnsupportedOperationException if the graph is not a DAG (see {@link #isDAG()})
      */
     List<V> topologicalSort() throws UnsupportedOperationException;
@@ -521,7 +512,7 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      * Of course the sub-graph will contain the edges that link the vertices, but only the one selected.
      *
      * @param source the source vertex
-     * @param depth  the maximum depth (must be a positive number, if &gt;=0 a graph containing only the source is returned)
+     * @param depth  the maximum depth (must be a positive number, if &lt;=0 a graph containing only the source is returned)
      * @return a sub-graph of the original
      * @throws NullPointerException     if the vertex is null
      * @throws IllegalArgumentException if the vertex is not contained
@@ -562,91 +553,5 @@ public interface Graph<V, W extends Number> extends Iterable<V> {
      */
     Map<V, List<Edge<V, W>>> distance(V source) throws NullPointerException, IllegalArgumentException;
 
-    /**
-     * Save the Graph passed as input to a file inserted as parameter.<br>
-     * The resulting file is a Json string representing all the graph.<br>
-     * If the directory for getting through the file do not exist,<br>
-     * then it is created.<br>
-     * For now the marks are not included.
-     * 
-     * @param graph the graph to save
-     * @param file the name of the file
-     * @throws IOException for various reason that appear in the message, but the most common is that the file is not found.
-     */
-    static void save(Graph<?, ?> graph, String file) throws IOException {
-    	save(graph, "", file);
-    }
-    
-    /**
-     * Save the Graph passed as input to a file inserted as parameter.<br>
-     * The resulting file is a Json string representing all the graph.<br>
-     * If the directory for getting through the file do not exist,<br>
-     * then it is created.<br>
-     * For now the marks are not included.<br>
-     * The additional parameter is used if you want to save other as well as the graph.
-     * 
-     * @param graph the graph to save
-     * @param other other things to save
-     * @param file the name of the file
-     * @throws IOException for various reason that appear in the message, but the most common is that the file is not found.
-     */
-    static void save(Graph<?, ?> graph, String other, String file) throws IOException {
-    	GraphSaveStructure save = new GraphSaveStructure(graph, other);
-    	int slash = file.lastIndexOf("\\");
-    	if(slash == -1)
-    		slash = file.lastIndexOf("/");
-    	if(slash != -1) {
-    		String dir = file.substring(0, slash);
-    		File fDir = new File(dir);
-    		fDir.mkdirs();
-    	}
-    	
-    	FileWriter writer = new FileWriter(file);
-    	
-    	GSON.toJson(save, writer);
-    	writer.close();
-    }
-    
-    /**
-     * Load an already saved graph in an instance of a graph.
-     * Before loading the graph, it is emptied.
-     * 
-     * @param <V> the parameter needed for the vertex
-     * @param <W> the parameter needed for the weight
-     * @param graph the graph to load with
-     * @param file the file where the graph is saved
-     * @param classV the class used for the Vertex
-     * @param classW the class used for the Weight
-     * @return the string saved in other, if any
-     * @throws IOException for any possible reason, the most common: the file doesn't exist
-     * @throws NullPointerException if the graph is null
-     * @throws JsonSyntaxException if the file is malformed or corrupted
-     */
-    static <V, W extends Number> String load(Graph<V, W> graph, String file, Class<V> classV, Class<W> classW) throws IOException, NullPointerException, JsonSyntaxException {
-    	FileReader reader = new FileReader(file);
-    	StringBuilder fileContent = new StringBuilder();
-    	int c;
-    	
-    	while((c = reader.read()) != -1)
-    		fileContent.append((char)c);
-    	reader.close();
-    	GraphSaveStructure save = GSON.fromJson(fileContent.toString(), GraphSaveStructure.class);
-    	
-    	graph.removeAllVertex();
-    	for(String str : save.vertices)
-    		graph.addVertex(GSON.fromJson(str, classV));
-    	
-    	for(int i = 0; i<save.edges.length; i++)
-    		graph.addEdge(
-    				GSON.fromJson(save.edges[i].src, classV),
-    				GSON.fromJson(save.edges[i].dest, classV),
-    				GSON.fromJson(save.edges[i].weight, classW));
-    	/*
-    	for(int i = 0; i<save.marks.length; i++)
-    		graph.mark(GSON.fromJson(save.marks[i].vert, classV), save.marks[i].mark);
-    	*/
-    	return save.other;
-    }
-    
     // TODO maybe, but i don't think so... STATIC DISTANCE V* -> V*
 }

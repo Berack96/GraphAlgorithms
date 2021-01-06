@@ -1,11 +1,5 @@
 package berack96.lib.graph.view;
 
-import java.awt.BorderLayout;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import javax.swing.JFrame;
-
 import berack96.lib.graph.view.edge.EdgeListener;
 import berack96.lib.graph.view.vertex.VertexListener;
 import berack96.lib.graph.visit.VisitStrategy;
@@ -14,6 +8,12 @@ import berack96.lib.graph.visit.impl.DFS;
 import berack96.lib.graph.visit.impl.Dijkstra;
 import berack96.lib.graph.visit.impl.Tarjan;
 
+import javax.swing.*;
+import java.awt.*;
+import java.io.Serial;
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 /**
  * This class is the Window that appear for building the graph and playing around with it
  *
@@ -21,10 +21,10 @@ import berack96.lib.graph.visit.impl.Tarjan;
  */
 public class GraphWindow<V, W extends Number> extends JFrame {
 
-	private static final long serialVersionUID = 1L;
+	@Serial
+    private static final long serialVersionUID = 1L;
 
     private final GraphPanel<V, W> graphPanel;
-    private final GraphInfo<V, W> infoPanel;
 
     public GraphWindow(GraphPanel<V, W> graphPanel, VertexListener<V> vListener, EdgeListener<V, W> eListener) {
         this.setTitle("Grafo");
@@ -37,14 +37,14 @@ public class GraphWindow<V, W extends Number> extends JFrame {
         strats.add(new Dijkstra<>());
         strats.add(new Tarjan<>());
 
-        this.infoPanel = new GraphInfo<>(graphPanel, vListener, eListener, strats);
+        GraphInfo<V, W> infoPanel = new GraphInfo<>(graphPanel, vListener, eListener, strats);
         this.graphPanel = graphPanel;
         this.add(infoPanel, BorderLayout.EAST);
         this.add(graphPanel);
     }
 
-    public void visitRefresh(int millisec) {
-        VisitListener.changeRefresh(millisec);
+    public void visitRefresh(int millis) {
+        VisitListener.changeRefresh(millis);
     }
 
     public GraphPanel<V, W> getGraphPanel() {

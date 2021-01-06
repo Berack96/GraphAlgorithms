@@ -7,7 +7,6 @@ package berack96.lib.graph.models;
  *
  */
 public class EdgeSaveStructure {
-	public EdgeSaveStructure() {}
 	protected EdgeSaveStructure(String s, String d, String w) {
 		this.src = s;
 		this.dest = d;

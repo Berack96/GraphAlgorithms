@@ -1,11 +1,11 @@
 package berack96.lib.graph;
 
+import berack96.lib.graph.visit.VisitStrategy;
+import berack96.lib.graph.visit.impl.VisitInfo;
+
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.function.Consumer;
-
-import berack96.lib.graph.visit.VisitStrategy;
-import berack96.lib.graph.visit.impl.VisitInfo;
 
 /**
  * Class used for represent a vertex of the graph.<br>
@@ -105,7 +105,7 @@ public class Vertex<V> {
      */
     public Collection<V> getChildren() throws UnsupportedOperationException {
         throwIfNotContained();
-        return graph.getChildren(vertex);
+        return graph.getChildrens(vertex);
     }
 
     /**
@@ -219,7 +219,7 @@ public class Vertex<V> {
      * Add the vertex to the graph only if it's not already in the graph.
      */
     public void addIfAbsent() {
-        graph.addVertexIfAbsent(vertex);
+        graph.addIfAbsent(vertex);
     }
 
     /**
@@ -228,7 +228,7 @@ public class Vertex<V> {
      */
     public void remove() {
         if (graph.contains(vertex))
-            graph.removeVertex(vertex);
+            graph.remove(vertex);
     }
 
     /**
@@ -240,7 +240,7 @@ public class Vertex<V> {
      * @throws NullPointerException          if the strategy is null
      * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
-	public VisitInfo<V> visit(final VisitStrategy strategy, final Consumer<V> visit) throws NullPointerException, UnsupportedOperationException {
+	public VisitInfo<V> visit(final VisitStrategy<V, ?> strategy, final Consumer<V> visit) throws NullPointerException, UnsupportedOperationException {
         throwIfNotContained();
         return graph.visit(vertex, (VisitStrategy<V, Number>) strategy, visit);
     }

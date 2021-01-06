@@ -1,23 +1,5 @@
 package berack96.lib.graph.view;
 
-import java.awt.Component;
-import java.awt.Container;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Observer;
-import java.util.Set;
-
 import berack96.lib.graph.Edge;
 import berack96.lib.graph.Graph;
 import berack96.lib.graph.Vertex;
@@ -25,17 +7,29 @@ import berack96.lib.graph.impl.MapGraph;
 import berack96.lib.graph.view.edge.EdgeComponent;
 import berack96.lib.graph.view.vertex.VertexComponent;
 
+import java.awt.*;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
+import java.io.IOException;
+import java.io.Serial;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Observer;
+import java.util.Set;
+
 @SuppressWarnings({"unchecked", "deprecation"})
 public class GraphPanel<V, W extends Number> extends Component {
 
-	private static final long serialVersionUID = 1L;
+	@Serial
+    private static final long serialVersionUID = 1L;
 	private final GraphicalView<VertexComponent<V>> vertexRender;
     private final GraphicalView<EdgeComponent<V, W>> edgeRender;
     private final Class<V> classV;
     private final Class<W> classW;
 
-    private final Container vertices = new Container();
-    private final Container edges = new Container();
+    final Container vertices = new Container();
+    final Container edges = new Container();
 
     private final Graph<V, W> graph = new MapGraph<>();
     private final Set<Observer> observers = new HashSet<>();
@@ -78,8 +72,10 @@ public class GraphPanel<V, W extends Number> extends Component {
             boolean isContained = false;
             
             for(Component comp : vertices.getComponents())
-            	if (comp.equals(v))
-            		isContained = true;
+                if (comp.equals(v)) {
+                    isContained = true;
+                    break;
+                }
             
             if (!isContained) {
                 v.setBounds(vertexRender.getBox(v, center));
@@ -122,8 +118,8 @@ public class GraphPanel<V, W extends Number> extends Component {
             edgeComponent.setBounds(edgeRender.getBox(edgeComponent, center));
             edges.add(edgeComponent);
             graph.addEdge(edgeComponent.edge);
-        } catch (Exception ignore) {
-        	ignore.printStackTrace();
+        } catch (Exception e) {
+        	e.printStackTrace();
         }
     }
 
@@ -165,26 +161,11 @@ public class GraphPanel<V, W extends Number> extends Component {
     }
 
     public void save(String fileName) throws IOException {
-    	GraphGraphicalSave save = new GraphGraphicalSave(vertices);
-    	Graph.save(graph, Graph.GSON.toJson(save), fileName);
+        new GraphPointsSave<>(this).save(graph, fileName);
     }
     
     public void load(String fileName) throws IOException {
-    	String saveContent = Graph.load(graph, fileName, classV, classW);
-    	GraphGraphicalSave save = Graph.GSON.fromJson(saveContent, GraphGraphicalSave.class);
-    	vertices.removeAll();
-    	edges.removeAll();
-    	
-    	for(int i = 0; i<save.vertices.length; i++) {
-    		V v = Graph.GSON.fromJson(save.vertices[i], classV);
-    		Point p = save.points[i];
-    		addVertex(p, v);
-    	}
-    	
-    	for(String v : save.vertices)
-    		graph.getEdgesOut(Graph.GSON.fromJson(v, classV)).forEach(e -> addEdge(e));
-    	
-    	repaint();
+        new GraphPointsSave<>(this).load(graph, fileName, classV, classW);
     }
 
     @Override
@@ -229,37 +210,5 @@ public class GraphPanel<V, W extends Number> extends Component {
         observers.forEach(observer -> observer.update(null, this.graph));
     }
     
-    class GraphGraphicalSave {
-    	public GraphGraphicalSave() {}
-    	protected GraphGraphicalSave(Container vertices) {
-    		List<String> v = new LinkedList<>();
-    		List<Point> p = new LinkedList<>();
-    		
-        	for(Component vertex : vertices.getComponents()) {
-        		Point temp = new Point(vertex.getX(), vertex.getY());
-        		temp.x += vertex.getWidth() / 2;
-        		temp.y += vertex.getHeight() / 2;
-        		
-    			p.add(temp);
-    			v.add(Graph.GSON.toJson(((VertexComponent<V>) vertex).vertex.getValue()));
-        	}
-        	
-        	int i = 0;
-        	this.vertices = new String[v.size()];
-        	for(String s : v) {
-        		this.vertices[i] = s;
-        		i++;
-        	}
-        	
-        	i = 0;
-        	this.points = new Point[p.size()];
-        	for(Point pt : p) {
-        		this.points[i] = pt;
-        		i++;
-        	}
-    	}
-    	
-    	public String[] vertices;
-    	public Point[] points;
-    }
+
 }

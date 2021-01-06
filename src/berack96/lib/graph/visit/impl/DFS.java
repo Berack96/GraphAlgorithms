@@ -1,11 +1,11 @@
 package berack96.lib.graph.visit.impl;
 
+import berack96.lib.graph.Graph;
+import berack96.lib.graph.visit.VisitStrategy;
+
 import java.util.Iterator;
 import java.util.Stack;
 import java.util.function.Consumer;
-
-import berack96.lib.graph.Graph;
-import berack96.lib.graph.visit.VisitStrategy;
 
 /**
  * Depth-first search<br>
@@ -27,7 +27,7 @@ public class DFS<V, W extends Number> implements VisitStrategy<V, W> {
         while (!toVisit.isEmpty()) {
             V current = toVisit.peek();
             boolean hasChildToVisit = false;
-            Iterator<V> iter = graph.getChildren(current).iterator();
+            Iterator<V> iter = graph.getChildrens(current).iterator();
 
             while (iter.hasNext() && !hasChildToVisit) {
                 V child = iter.next();

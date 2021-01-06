@@ -25,13 +25,13 @@ public class VisitListener<V> implements GraphListener {
         this.strategy = strategy;
     }
 
-    public static void changeRefresh(int millisec) {
-        refreshTime = millisec;
+    public static void changeRefresh(int mills) {
+        refreshTime = mills;
     }
 
     @Override
     public void remove() {
-    	timers.forEach(t -> t.stop());
+    	timers.forEach(Timer::stop);
         timers.clear();
     }
 

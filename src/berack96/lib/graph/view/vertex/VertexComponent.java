@@ -1,10 +1,12 @@
 package berack96.lib.graph.view.vertex;
 
-import java.awt.*;
-
 import berack96.lib.graph.Vertex;
 
+import java.awt.*;
+import java.io.Serial;
+
 public class VertexComponent<V> extends Component {
+    @Serial
     private static final long serialVersionUID = 1L;
     
 	public final Vertex<V> vertex;

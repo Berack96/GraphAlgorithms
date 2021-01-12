@@ -9,53 +9,54 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.stream.JsonReader;
 
 import java.io.*;
-import java.lang.reflect.Type;
 
 /**
  * Support class used for saving a Graph in a file.
- * 
- * @author Berack96
  *
+ * @author Berack96
  */
-public class GraphSaveStructure<V, W extends Number> {
-
-	final public Gson gson = new Gson();
+public class GraphSaveStructure<V> {
+	final static public Gson gson = new Gson();
 	public String[] vertices;
 	public EdgeSaveStructure[] edges;
 	//public MarkSaveStructure[] marks;
 
-	/*
+	/**
 	 * Load the graph saved in this class in an instance of a graph passed.
 	 * Before loading the graph, it is emptied.
+	 *
+	 * @param graph    the graph where insert the data
+	 * @param fileName the file path and name
+	 * @param classV   the class of the vertices
+	 * @throws FileNotFoundException in the case the file is not found
+	 * @throws NullPointerException  in the case the graph is null
 	 */
-	public final void load(Graph<V, W> graph, String fileName, Class<V> classV, Class<W> classW) throws FileNotFoundException {
-		Gson gson = new GsonBuilder().registerTypeAdapter(this.getClass(), new Creator(this)).create();
+	public final void load(@SuppressWarnings("ConstantConditions") Graph<V> graph, String fileName, Class<V> classV) throws FileNotFoundException, NullPointerException {
+		//this way i use this class for the load
+		InstanceCreator<GraphSaveStructure<V>> creator = type -> this;
+		Gson gson = new GsonBuilder().registerTypeAdapter(this.getClass(), creator).create();
 		JsonReader reader = new JsonReader(new FileReader(fileName));
-		gson.fromJson(reader, this.getClass());
-		loadGraph(graph, classV, classW);
+		gson.fromJson(reader, GraphSaveStructure.class);
+		loadGraph(graph, classV);
 	}
 
 	/**
 	 * This method can be used by sub-classes for saving other stuff from the graph
 	 *
-	 * @param graph the graph to load with
+	 * @param graph  the graph to load with
 	 * @param classV the class used for the Vertex
-	 * @param classW the class used for the Weight
 	 * @throws NullPointerException if the graph is null
-	 * @throws JsonSyntaxException if the file is malformed or corrupted
+	 * @throws JsonSyntaxException  if the file is malformed or corrupted
 	 */
-	protected void loadGraph(Graph<V, W> graph, Class<V> classV, Class<W> classW) throws NullPointerException, JsonSyntaxException {
+	protected void loadGraph(Graph<V> graph, Class<V> classV) throws NullPointerException, JsonSyntaxException {
 		graph.removeAll();
-		for(String str : vertices)
+		for (String str : vertices)
 			graph.add(gson.fromJson(str, classV));
 
 		for (EdgeSaveStructure edge : edges)
-			graph.addEdge(
-					gson.fromJson(edge.src, classV),
-					gson.fromJson(edge.dest, classV),
-					gson.fromJson(edge.weight, classW)
-			);
+			graph.addEdge(gson.fromJson(edge.src, classV), gson.fromJson(edge.dest, classV), edge.weight);
 	}
+
 	/**
 	 * Save the Graph passed as input to a file inserted as parameter.<br>
 	 * The resulting file is a Json string representing all the graph.<br>
@@ -68,46 +69,37 @@ public class GraphSaveStructure<V, W extends Number> {
 	 * @param file the name of the file
 	 * @throws IOException for various reason that appear in the message, but the most common is that the file is not found.
 	 */
-    public final void save(Graph<V,W> graph, String file) throws IOException {
-    	saveGraph(graph);
+	public final void save(Graph<V> graph, String file) throws IOException {
+		saveGraph(graph);
 		int slash = file.lastIndexOf("\\");
-    	if(slash == -1)
-    		slash = file.lastIndexOf("/");
-    	if(slash != -1) {
-    		String dir = file.substring(0, slash);
-    		File fDir = new File(dir);
+		if (slash == -1)
+			slash = file.lastIndexOf("/");
+		if (slash != -1) {
+			String dir = file.substring(0, slash);
+			File fDir = new File(dir);
 			//noinspection ResultOfMethodCallIgnored
 			fDir.mkdirs();
-    	}
+		}
 
-    	FileWriter writer = new FileWriter(file);
-        gson.toJson(this, writer);
-    	writer.close();
-    }
+		FileWriter writer = new FileWriter(file);
+		gson.toJson(this, writer);
+		writer.close();
+	}
 
 	/**
 	 * This method can be used by sub-classes for saving other stuff from the graph
+	 *
 	 * @param graph the graph to save
 	 */
-	protected void saveGraph(Graph<V,W> graph) {
+	protected void saveGraph(Graph<V> graph) {
 		this.vertices = new String[graph.size()];
 		int i = 0;
-		for(Object o: graph.vertices())
+		for (Object o : graph.vertices())
 			this.vertices[i++] = gson.toJson(o);
 
 		this.edges = new EdgeSaveStructure[graph.numberOfEdges()];
 		i = 0;
-		for (Edge<?, ?> edge : graph.edges())
-			this.edges[i++] = new EdgeSaveStructure(
-					gson.toJson(edge.getSource()),
-					gson.toJson(edge.getDestination()),
-					gson.toJson(edge.getWeight())
-			);
-	}
-
-	private class Creator implements InstanceCreator<GraphSaveStructure<V,W>> {
-		private final GraphSaveStructure<V,W> save;
-		public Creator(GraphSaveStructure<V,W> save) { this.save = save; }
-		public GraphSaveStructure<V,W> createInstance(Type type) { return save; }
+		for (Edge<V> edge : graph.edges())
+			this.edges[i++] = new EdgeSaveStructure(gson.toJson(edge.getSource()), gson.toJson(edge.getDestination()), edge.getWeight());
 	}
 }

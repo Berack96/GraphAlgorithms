@@ -1,18 +1,18 @@
 package berack96.lib.graph.view.edge;
 
+import berack96.lib.graph.view.GraphicalView;
+import berack96.lib.graph.view.stuff.Arrow;
+
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.util.Collection;
 
-import berack96.lib.graph.view.GraphicalView;
-import berack96.lib.graph.view.stuff.Arrow;
-
-public class EdgeView<V, W extends Number> implements GraphicalView<EdgeComponent<V, W>> {
+public class EdgeView<V> implements GraphicalView<EdgeComponent<V>> {
 
     private static final Font FONT = new Font("Papyrus", Font.BOLD, 14);
 
     @Override
-    public Rectangle getBox(EdgeComponent<V, W> edge, Point center) {
+    public Rectangle getBox(EdgeComponent<V> edge, Point center) {
         /* CALCULATING BOUNDS AND ARROW STARTING AND ENDING POINTS */
         Point srcLoc = edge.source.getLocation();
         Point desLoc = edge.destination.getLocation();
@@ -29,7 +29,7 @@ public class EdgeView<V, W extends Number> implements GraphicalView<EdgeComponen
         /* CALCULATING THE NUMBER SPACE */
         int boxDistance = (int) (srcLoc.distance(desLoc) / 2.7);
         FontMetrics metrics = edge.getFontMetrics(FONT);
-        int dimString = metrics.stringWidth(edge.weight.toString());
+        int dimString = metrics.stringWidth(String.valueOf(edge.weight));
         int dimRect = Math.max(dimString, metrics.getHeight());
         return new Rectangle(
                 (int) ((desLoc.x - (vector.x * boxDistance)) - (dimRect / 2)),
@@ -38,7 +38,7 @@ public class EdgeView<V, W extends Number> implements GraphicalView<EdgeComponen
     }
 
     @Override
-    public void paint(Graphics2D g2, EdgeComponent<V, W> edge, Point center) {
+    public void paint(Graphics2D g2, EdgeComponent<V> edge, Point center) {
         /* CALCULATING BOUNDS AND ARROW STARTING AND ENDING POINTS */
         Point srcLoc = edge.source.getLocation();
         Point desLoc = edge.destination.getLocation();
@@ -55,7 +55,7 @@ public class EdgeView<V, W extends Number> implements GraphicalView<EdgeComponen
         /* CALCULATING THE NUMBER SPACE */
         int boxDistance = (int) (srcLoc.distance(desLoc) / 2.7);
         FontMetrics metrics = edge.getFontMetrics(FONT);
-        int dimString = metrics.stringWidth(edge.weight.toString());
+        int dimString = metrics.stringWidth(String.valueOf(edge.weight));
         int dimRect = Math.max(dimString, metrics.getHeight());
         Rectangle integerRect = new Rectangle(
                 (int) ((desLoc.x - (vector.x * boxDistance)) - (dimRect / 2)),
@@ -69,8 +69,8 @@ public class EdgeView<V, W extends Number> implements GraphicalView<EdgeComponen
         /* THE COLOR OF THE ARROW */
         Collection<Object> marksD = edge.destination.vertex.getMarks();
         Collection<Object> marksS = edge.source.vertex.getMarks();
-        
-        boolean isChild = marksD.contains(edge.source.vertex.getValue());
+
+        boolean isChild = marksD.contains(edge.source.vertex.get());
         boolean selected = marksS.contains("selected");
         boolean isMod = marksD.contains("modD") && marksS.contains("modS");
 
@@ -92,7 +92,7 @@ public class EdgeView<V, W extends Number> implements GraphicalView<EdgeComponen
         g2.setColor(arrowColor);
         g2.draw(integerRect);
         g2.setColor(stringColor);
-        g2.drawString(edge.weight.toString(), (float) (integerRect.x + (dimRect - dimString) / 2), (float) (integerRect.y + (dimRect + metrics.getHeight() / 2) / 2));
+        g2.drawString(String.valueOf(edge.weight), (float) (integerRect.x + (dimRect - dimString) / 2), (float) (integerRect.y + (dimRect + metrics.getHeight() / 2) / 2));
     }
 
     private Point.Double getVector(Point a, Point b) {

@@ -1,20 +1,20 @@
 package berack96.lib.graph.impl;
 
-import berack96.lib.graph.Edge;
 import berack96.lib.graph.Graph;
+import berack96.lib.graph.GraphDirected;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * An implementation of the graph using an adjacent list for representing the edges
  *
  * @param <V> the vertex
- * @param <W> the weight
  * @author Berack96
  */
-public class ListGraph<V, W extends Number> extends AGraph<V, W> {
+public class ListGraph<V> extends GraphDirected<V> {
 
-	final private Map<V, List<Adj>> adj = new HashMap<>();
+	final private Map<V, List<Adj>> adj = new Hashtable<>();
 
 	@Override
 	public Iterator<V> iterator() {
@@ -22,121 +22,137 @@ public class ListGraph<V, W extends Number> extends AGraph<V, W> {
 	}
 
 	@Override
-	protected Graph<V, W> getNewInstance() {
+	protected Graph<V> getNewInstance() {
 		return new ListGraph<>();
 	}
 
 	@Override
-	protected void addVertex(V vertex) {
-		adj.put(vertex, new LinkedList<>());
+	public void add(V vertex) {
+		check(vertex);
+		if (adj.containsKey(vertex))
+			removeAllEdge(vertex);
+		else
+			adj.put(vertex, new LinkedList<>());
 	}
 
 	@Override
-	protected boolean containsVertex(V vertex) {
+	public boolean contains(V vertex) {
+		check(vertex);
 		return adj.containsKey(vertex);
 	}
 
 	@Override
-	protected void removeVertex(V vertex) {
+	public void remove(V vertex) {
+		checkVert(vertex);
 		adj.remove(vertex);
-		adj.forEach((v, l) -> {
-			Set<Adj> set = new HashSet<>();
-			l.forEach(adj -> {
-				if(adj.vertex.equals(vertex))
-					set.add(adj);
-			});
-			l.removeAll(set);
-		});
+		adj.forEach((v, list) -> list.remove(getAdj(list, vertex)));
 	}
 
 	@Override
-	protected void removeAllVertices() {
+	public int addEdge(V vertex1, V vertex2, int weight) {
+		checkVert(vertex1, vertex2);
+
+		List<Adj> list = adj.get(vertex1);
+		Adj a = getAdj(list, vertex2);
+		int old = a == null ? NO_EDGE : a.weight;
+
+		if (weight == NO_EDGE)
+			list.remove(a);
+		else if (old == NO_EDGE)
+			list.add(new Adj(vertex2, weight));
+		else
+			a.weight = weight;
+		return old;
+	}
+
+	@Override
+	public int getWeight(V vertex1, V vertex2) {
+		checkVert(vertex1, vertex2);
+		Adj a = getAdj(adj.get(vertex1), vertex2);
+		return a == null ? NO_EDGE : a.weight;
+	}
+
+	@Override
+	public Collection<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException {
+		checkVert(vertex);
+		Collection<V> children = new HashSet<>();
+		for (Adj adj : adj.get(vertex))
+			children.add(adj.vertex);
+		return children;
+	}
+
+	@Override
+	public Collection<V> getAncestors(V vertex) throws NullPointerException, IllegalArgumentException {
+		checkVert(vertex);
+		Collection<V> ancestors = new HashSet<>();
+		adj.forEach((v, list) -> {
+			if (getAdj(list, vertex) != null)
+				ancestors.add(v);
+		});
+
+		return ancestors;
+	}
+
+
+	/**
+	 * From here on there are some optimization for the methods of the generic DirectedGraph
+	 **/
+
+	@Override
+	public int size() {
+		return adj.size();
+	}
+
+	@Override
+	public int numberOfEdges() {
+		AtomicInteger size = new AtomicInteger(0);
+		adj.values().forEach(list -> size.addAndGet(list.size()));
+		return size.get();
+	}
+
+	@Override
+	public int degreeIn(V vertex) throws NullPointerException, IllegalArgumentException {
+		checkVert(vertex);
+		AtomicInteger degree = new AtomicInteger(0);
+		adj.values().forEach(list -> degree.addAndGet(getAdj(list, vertex) != null ? 1 : 0));
+		return degree.get();
+	}
+
+	@Override
+	public int degreeOut(V vertex) throws NullPointerException, IllegalArgumentException {
+		checkVert(vertex);
+		return adj.get(vertex).size();
+	}
+
+	@Override
+	public void removeAllEdge(V vertex) throws NullPointerException, IllegalArgumentException {
+		checkVert(vertex);
+		adj.get(vertex).clear();
+		adj.forEach((v, list) -> list.remove(getAdj(list, vertex)));
+	}
+
+	@Override
+	public void removeAllEdge() {
+		adj.forEach((v, list) -> list.clear());
+	}
+
+	@Override
+	public void removeAll() {
 		adj.clear();
 	}
 
-	@Override
-	protected boolean containsEdgeImpl(V vertex1, V vertex2) {
-		if(!adj.containsKey(vertex1))
-			return false;
-		
-		for(Adj a : adj.get(vertex1))
-			if(a.vertex.equals(vertex2))
-				return true;
-		return false;
+	private Adj getAdj(List<Adj> list, V vertex) {
+		for (Adj adj : list)
+			if (Objects.equals(adj.vertex, vertex))
+				return adj;
+		return null;
 	}
 
-	@Override
-	protected W addEdgeImpl(V vertex1, V vertex2, W weight) {
-		W ret = null;
-		List<Adj> l = adj.get(vertex1);
-		for(Adj a : l)
-			if(a.vertex.equals(vertex2)) {
-				ret = a.weight;
-				a.weight = weight;
-			}
-		if(ret == null)
-			l.add(new Adj(vertex2, weight));
-		return ret;
-	}
-
-	@Override
-	protected W getWeightImpl(V vertex1, V vertex2) {
-		W ret = null;
-		for(Adj a : adj.get(vertex1))
-			if(a.vertex.equals(vertex2))
-				ret = a.weight;
-		return ret;
-	}
-
-	@Override
-	protected Collection<Edge<V, W>> getEdgesOutImpl(V vertex) {
-		Set<Edge<V,W>> set = new HashSet<>();
-		adj.get(vertex).forEach(a -> set.add(new Edge<>(vertex, a.vertex, a.weight)));
-		return set;
-	}
-
-	@Override
-	protected Collection<Edge<V, W>> getEdgesInImpl(V vertex) {
-		Set<Edge<V,W>> set = new HashSet<>();
-		adj.forEach((v, l) -> l.forEach(a -> {
-			if(a.vertex.equals(vertex))
-				set.add(new Edge<>(v, a.vertex, a.weight));
-		}));
-		return set;
-	}
-
-	@Override
-	protected void removeEdgeImpl(V vertex1, V vertex2) {
-		Adj ret = null;
-		List<Adj> l = adj.get(vertex1);
-		for(Adj a : l)
-			if(a.vertex.equals(vertex2))
-				ret = a;
-		l.remove(ret);
-	}
-
-	@Override
-	protected void removeAllOutEdgeImpl(V vertex) {
-		adj.compute(vertex,(v, l) -> new LinkedList<>());
-	}
-
-	@Override
-	protected void removeAllInEdgeImpl(V vertex) {
-		adj.forEach((v, l) -> {
-			Set<Adj> set = new HashSet<>();
-			l.forEach(adj -> {
-				if(adj.vertex.equals(vertex))
-					set.add(adj);
-			});
-			l.removeAll(set);
-		});
-	}
-	
 	private class Adj {
 		private final V vertex;
-		private W weight;
-		
-		private Adj(V vertex, W weight) {
+		private int weight;
+
+		private Adj(V vertex, int weight) {
 			this.vertex = vertex;
 			this.weight = weight;
 		}

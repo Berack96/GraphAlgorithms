@@ -12,13 +12,12 @@ import java.util.function.Consumer;
  * The algorithm starts at the root node and explores as far as possible along each branch before backtracking.
  *
  * @param <V> the vertex of the graph
- * @param <W> the weight of the graph
  * @author Berack96
  */
-public class DFS<V, W extends Number> implements VisitStrategy<V, W> {
+public class DFS<V> implements VisitStrategy<V> {
 
     @Override
-    public VisitInfo<V> visit(Graph<V, W> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
+    public VisitInfo<V> visit(Graph<V> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
         VisitInfo<V> info = new VisitInfo<>(source);
         final Stack<V> toVisit = new Stack<>();
 
@@ -27,7 +26,7 @@ public class DFS<V, W extends Number> implements VisitStrategy<V, W> {
         while (!toVisit.isEmpty()) {
             V current = toVisit.peek();
             boolean hasChildToVisit = false;
-            Iterator<V> iter = graph.getChildrens(current).iterator();
+            Iterator<V> iter = graph.getChildren(current).iterator();
 
             while (iter.hasNext() && !hasChildToVisit) {
                 V child = iter.next();

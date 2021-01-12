@@ -9,21 +9,21 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class EdgeListener<V, W extends Number> implements GraphListener {
+public abstract class EdgeListener<V> implements GraphListener {
 
-    private final GraphPanel<V, W> graphPanel;
+    private final GraphPanel<V> graphPanel;
     private final AtomicReference<VertexComponent<V>> componentPressed = new AtomicReference<>();
     private final AtomicReference<Integer> buttonPressed = new AtomicReference<>();
-    private final AtomicReference<EdgeComponent<V, W>> edge = new AtomicReference<>();
+    private final AtomicReference<EdgeComponent<V>> edge = new AtomicReference<>();
     private final StringBuilder string = new StringBuilder();
 
-    public EdgeListener(GraphPanel<V, W> graphPanel) {
+    public EdgeListener(GraphPanel<V> graphPanel) {
         this.graphPanel = graphPanel;
     }
 
-    protected abstract W buildNewEdge(Vertex<V> vertex, Vertex<V> vertex1);
+    protected abstract int buildNewEdge(Vertex<V> vertex, Vertex<V> vertex1);
 
-    protected abstract W buildEdgeFrom(String string);
+    protected abstract int buildEdgeFrom(String string);
 
     @Override
     public String getDescription() {
@@ -54,8 +54,8 @@ public abstract class EdgeListener<V, W extends Number> implements GraphListener
                 VertexComponent<V> source = componentPressed.get();
                 VertexComponent<V> destination = graphPanel.getVertexAt(e.getPoint());
 
-                if (!graphPanel.getGraph().containsEdge(source.vertex.getValue(), destination.vertex.getValue())
-                	&& !source.vertex.equals(destination.vertex))
+                if (!graphPanel.getGraph().containsEdge(source.vertex.get(), destination.vertex.get())
+                        && !source.vertex.equals(destination.vertex))
                     graphPanel.addEdge(source, destination, buildNewEdge(source.vertex, destination.vertex));
             } catch (Exception ignore) {
             }

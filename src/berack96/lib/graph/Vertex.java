@@ -3,8 +3,9 @@ package berack96.lib.graph;
 import berack96.lib.graph.visit.VisitStrategy;
 import berack96.lib.graph.visit.impl.VisitInfo;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -15,7 +16,6 @@ import java.util.function.Consumer;
  * @param <V> the vertex
  * @author Berack96
  */
-@SuppressWarnings({"unchecked", "rawtypes"})
 public class Vertex<V> {
 
     public static final String REMOVED = "The vertex is no longer in the graph";
@@ -27,7 +27,7 @@ public class Vertex<V> {
     /**
      * The graph associated
      */
-    private final Graph<V, Number> graph;
+    private final Graph<V> graph;
 
     /**
      * Get a Vertex linked with the graph
@@ -36,10 +36,10 @@ public class Vertex<V> {
      * @param vertex the vertex
      * @throws NullPointerException if one of the param is null
      */
-    public Vertex(Graph<V, ?> graph, V vertex) throws NullPointerException {
+    public Vertex(Graph<V> graph, V vertex) throws NullPointerException {
         if (graph == null || vertex == null)
             throw new NullPointerException();
-        this.graph = (Graph<V, Number>) graph;
+        this.graph = graph;
         this.vertex = vertex;
     }
 
@@ -48,7 +48,7 @@ public class Vertex<V> {
      *
      * @return the vertex
      */
-    public V getValue() {
+    public V get() {
         return vertex;
     }
 
@@ -105,22 +105,22 @@ public class Vertex<V> {
      */
     public Collection<V> getChildren() throws UnsupportedOperationException {
         throwIfNotContained();
-        return graph.getChildrens(vertex);
+        return graph.getChildren(vertex);
     }
 
     /**
      * Get all the children of this vertex like {@link #getChildren()}, but as {@link Vertex}.<br>
      * In this way they are linked to the graph as this one.<br>
-     * * This method allocate a new object for each vertex, so it is more heavy.
+     * This method allocate a new object for each vertex, so it is more heavy.
      *
      * @return a collection of vertices that are children of the current one
      * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
     public Collection<Vertex<V>> getChildrenAsVertex() throws UnsupportedOperationException {
         Collection<V> children = getChildren();
-        Collection<Vertex<V>> toReturn = new HashSet<>();
+        Collection<Vertex<V>> toReturn = new ArrayList<>(children.size());
         for (V vertex : children)
-            toReturn.add(new Vertex<>(graph, vertex));
+            toReturn.add(graph.get(vertex));
 
         return toReturn;
     }
@@ -147,33 +147,24 @@ public class Vertex<V> {
      */
     public Collection<Vertex<V>> getAncestorsAsVertex() throws UnsupportedOperationException {
         Collection<V> ancestors = getAncestors();
-        Collection<Vertex<V>> toReturn = new HashSet<>();
+        Collection<Vertex<V>> toReturn = new ArrayList<>(ancestors.size());
         for (V vertex : ancestors)
-            toReturn.add(new Vertex<>(graph, vertex));
+            toReturn.add(graph.get(vertex));
 
         return toReturn;
     }
 
     /**
-     * Get all the edge that goes OUT of this vertex
+     * This method will return the weight of the edge that connects<br>
+     * this vertex to the vertex inserted.<br>
+     * In the case that the two vertices aren't connected this method will return 0.
      *
-     * @return a collection of edges with source this one
-     * @throws UnsupportedOperationException if the vertex is not in the graph anymore
+     * @param child a child of this vertex
+     * @return the weight to the child or 0 if the edge doesn't exist.
      */
-    public Collection<Edge<V, Number>> getEdgesOut() throws UnsupportedOperationException {
+    public int getChildWeight(V child) {
         throwIfNotContained();
-        return graph.getEdgesOut(vertex);
-    }
-
-    /**
-     * Get all the edge that goes INTO this vertex
-     *
-     * @return a collection of edges with destination this one
-     * @throws UnsupportedOperationException if the vertex is not in the graph anymore
-     */
-    public Collection<Edge<V, Number>> getEdgesIn() throws UnsupportedOperationException {
-        throwIfNotContained();
-        return graph.getEdgesIn(vertex);
+        return graph.getWeight(vertex, child);
     }
 
     /**
@@ -186,9 +177,24 @@ public class Vertex<V> {
      * @throws IllegalArgumentException      if the child vertex is not contained in the graph
      * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
-    public void addChild(V child, Number weight) throws NullPointerException, IllegalArgumentException, UnsupportedOperationException {
+    public void addChild(V child, int weight) throws NullPointerException, IllegalArgumentException, UnsupportedOperationException {
         throwIfNotContained();
         graph.addEdge(vertex, child, weight);
+    }
+
+    /**
+     * Add a child to this vertex.<br>
+     * The added child must be in the graph or it will return an exception.<br>
+     * This method will add the basic value for the weight provided by the graph. {@link Graph#addEdge(V, V)}
+     *
+     * @param child the destination vertex of this edge
+     * @throws NullPointerException          if the param is null
+     * @throws IllegalArgumentException      if the child vertex is not contained in the graph
+     * @throws UnsupportedOperationException if the vertex is not in the graph anymore
+     */
+    public void addChild(V child) throws NullPointerException, IllegalArgumentException, UnsupportedOperationException {
+        throwIfNotContained();
+        graph.addEdge(vertex, child);
     }
 
     /**
@@ -240,9 +246,10 @@ public class Vertex<V> {
      * @throws NullPointerException          if the strategy is null
      * @throws UnsupportedOperationException if the vertex is not in the graph anymore
      */
-	public VisitInfo<V> visit(final VisitStrategy<V, ?> strategy, final Consumer<V> visit) throws NullPointerException, UnsupportedOperationException {
+    @SuppressWarnings("ConstantConditions")
+    public VisitInfo<V> visit(final VisitStrategy<V> strategy, final Consumer<V> visit) throws NullPointerException, UnsupportedOperationException {
         throwIfNotContained();
-        return graph.visit(vertex, (VisitStrategy<V, Number>) strategy, visit);
+        return graph.visit(vertex, strategy, visit);
     }
 
     @Override
@@ -252,13 +259,13 @@ public class Vertex<V> {
 
     @Override
     public int hashCode() {
-        return toString().hashCode();
+        return vertex.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
         try {
-            return obj instanceof Vertex && (this.vertex.equals(obj) || this.vertex.equals(((Vertex) obj).vertex));
+            return obj instanceof Vertex && (Objects.equals(vertex, obj) || Objects.equals(vertex, ((Vertex<?>) obj).vertex));
         } catch (Exception e) {
             return false;
         }

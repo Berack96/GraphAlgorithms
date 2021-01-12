@@ -6,10 +6,9 @@ import java.util.List;
  * Interface that is helpful for implements visit that needs to retrieve the topological sort
  *
  * @param <V> the vertex
- * @param <W> the weight
  * @author Berack96
  */
-public interface VisitTopological<V, W extends Number> extends VisitStrategy<V, W> {
+public interface VisitTopological<V> extends VisitStrategy<V> {
 
     /**
      * Return the latest calculated Topological sort of the graph.<br>

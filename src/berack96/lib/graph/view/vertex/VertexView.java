@@ -12,7 +12,7 @@ public class VertexView<V> implements GraphicalView<VertexComponent<V>> {
     @Override
     public Rectangle getBox(VertexComponent<V> obj, Point center) {
         FontMetrics metrics = obj.getFontMetrics(FONT);
-        int stringPixels = metrics.stringWidth(obj.vertex.getValue().toString());
+        int stringPixels = metrics.stringWidth(obj.vertex.get().toString());
         int size = Math.max(stringPixels, metrics.getHeight()) + 2 * PADDING;
 
         return new Rectangle(center.x - size / 2, center.y - size / 2, size, size);
@@ -23,9 +23,9 @@ public class VertexView<V> implements GraphicalView<VertexComponent<V>> {
         boolean discovered = obj.vertex.getMarks().contains("discovered");
         boolean visited = obj.vertex.getMarks().contains("visited");
         boolean selected = obj.vertex.getMarks().contains("selected");
-        
+
         FontMetrics metrics = obj.getFontMetrics(FONT);
-        int stringPixels = metrics.stringWidth(obj.vertex.getValue().toString());
+        int stringPixels = metrics.stringWidth(obj.vertex.get().toString());
         int size = Math.max(stringPixels, metrics.getHeight()) + 2 * PADDING;
 
         center.x = center.x - size / 2;
@@ -37,6 +37,6 @@ public class VertexView<V> implements GraphicalView<VertexComponent<V>> {
         g2.setColor(visited || discovered  || selected ? Color.ORANGE : Color.YELLOW);
         g2.fillOval(center.x + PADDING / 2, center.y + PADDING / 2, size - PADDING, size - PADDING);
         g2.setColor(Color.BLACK);
-        g2.drawString(obj.vertex.getValue().toString(), center.x + PADDING + (size - 2 * PADDING - stringPixels) / 2, center.y + (size) / 2 + PADDING);
+        g2.drawString(obj.vertex.get().toString(), center.x + PADDING + (size - 2 * PADDING - stringPixels) / 2, center.y + (size) / 2 + PADDING);
     }
 }

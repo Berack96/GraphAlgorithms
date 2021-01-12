@@ -11,10 +11,9 @@ import java.util.function.Consumer;
  * Class that implements the Tarjan algorithm and uses it for getting the SCC and the topological sort
  *
  * @param <V> vertex
- * @param <W> weight
  * @author Berack96
  */
-public class Tarjan<V, W extends Number> implements VisitSCC<V, W>, VisitTopological<V, W> {
+public class Tarjan<V> implements VisitSCC<V>, VisitTopological<V> {
 
     private Collection<Collection<V>> SCC = null;
     private List<V> topologicalSort = null;
@@ -44,15 +43,15 @@ public class Tarjan<V, W extends Number> implements VisitSCC<V, W>, VisitTopolog
      * @throws IllegalArgumentException doesn't throw this
      */
     @Override
-    public VisitInfo<V> visit(Graph<V, W> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
+    public VisitInfo<V> visit(Graph<V> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
         SCC = new HashSet<>();
-        topologicalSort = new LinkedList<>();
+        topologicalSort = new ArrayList<>(graph.size());
         info = null;
 
         indices = new HashMap<>();
         lowLink = new HashMap<>();
         stack = new Stack<>();
-        Integer index = 0;
+        int index = 0;
 
         for (V vertex : graph) {
             if (info == null)
@@ -61,11 +60,11 @@ public class Tarjan<V, W extends Number> implements VisitSCC<V, W>, VisitTopolog
                 strongConnect(graph, vertex, index, visit);
         }
 
-        topologicalSort = (graph.size() == SCC.size()) ? new ArrayList<>(topologicalSort) : null;
+        topologicalSort = (graph.size() == SCC.size()) ? topologicalSort : null;
         return info;
     }
 
-    private void strongConnect(Graph<V, W> graph, V vertex, Integer index, Consumer<V> visit) {
+    private void strongConnect(Graph<V> graph, V vertex, Integer index, Consumer<V> visit) {
         // Set the depth index for v to the smallest unused index
         indices.put(vertex, index);
         lowLink.put(vertex, index);
@@ -74,7 +73,7 @@ public class Tarjan<V, W extends Number> implements VisitSCC<V, W>, VisitTopolog
         info.setDiscovered(vertex);
 
         // Consider successors of v
-        for (V child : graph.getChildrens(vertex)) {
+        for (V child : graph.getChildren(vertex)) {
             if (!indices.containsKey(child)) {
                 info.setParent(vertex, child);
                 strongConnect(graph, child, index, visit);

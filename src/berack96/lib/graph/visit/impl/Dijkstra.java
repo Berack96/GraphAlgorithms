@@ -1,26 +1,25 @@
 package berack96.lib.graph.visit.impl;
 
-import java.util.*;
-import java.util.function.Consumer;
-
 import berack96.lib.graph.Edge;
 import berack96.lib.graph.Graph;
 import berack96.lib.graph.visit.VisitDistance;
+
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Class that implements the Dijkstra algorithm and uses it for getting all the distance from a source
  *
  * @param <V> vertex
- * @param <W> weight
  * @author Berack96
  */
-public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
+public class Dijkstra<V> implements VisitDistance<V> {
 
-    private Map<V, List<Edge<V, W>>> distance = null;
+    private Map<V, List<Edge<V>>> distance = null;
     private V source = null;
 
     @Override
-    public Map<V, List<Edge<V, W>>> getLastDistance() {
+    public Map<V, List<Edge<V>>> getLastDistance() {
         return distance;
     }
 
@@ -30,15 +29,15 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
     }
 
     @Override
-    public VisitInfo<V> visit(Graph<V, W> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
+    public VisitInfo<V> visit(Graph<V> graph, V source, Consumer<V> visit) throws NullPointerException, IllegalArgumentException {
         VisitInfo<V> info = new VisitInfo<>(source);
         Queue<QueueEntry> queue = new PriorityQueue<>();
-        Map<V, Double> dist = new HashMap<>();
+        Map<V, Integer> dist = new HashMap<>();
         Map<V, V> prev = new HashMap<>();
 
         this.source = source;
-        dist.put(source, 0.0);                // Initialization
-        queue.add(new QueueEntry(source, 0.0));
+        dist.put(source, 0);                // Initialization
+        queue.add(new QueueEntry(source, 0));
 
         while (!queue.isEmpty()) {                      // The main loop
             QueueEntry u = queue.poll();                    // Remove and return best vertex
@@ -47,11 +46,11 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
             if (visit != null)
                 visit.accept(u.entry);
 
-            graph.getEdgesOut(u.entry).forEach((edge) -> {
-                V child = edge.getDestination();
+            for (V child : graph.getChildren(u.entry)) {
                 info.setDiscovered(child);
-                double alt = dist.get(u.entry) + edge.getWeight().doubleValue();
-                Double distCurrent = dist.get(child);
+                int alt = dist.get(u.entry) + graph.getWeight(u.entry, child);
+                Integer distCurrent = dist.get(child);
+
                 if (distCurrent == null || alt < distCurrent) {
                     dist.put(child, alt);
                     prev.put(child, u.entry);
@@ -60,17 +59,17 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
                     queue.remove(current);
                     queue.add(current);
                 }
-            });
+            }
         }
 
         /* Cleaning up the results */
         distance = new HashMap<>();
         for (V vertex : prev.keySet()) {
-            List<Edge<V, W>> path = new LinkedList<>();
+            List<Edge<V>> path = new LinkedList<>();
             V child = vertex;
             V father = prev.get(child);
             do {
-                Edge<V, W> edge = new Edge<>(father, child, graph.getWeight(father, child));
+                Edge<V> edge = new Edge<>(father, child, graph.getWeight(father, child));
                 path.add(0, edge);
                 info.setParent(father, child);
                 child = father;
@@ -84,9 +83,9 @@ public class Dijkstra<V, W extends Number> implements VisitDistance<V, W> {
 
     private class QueueEntry implements Comparable<QueueEntry> {
         final V entry;
-        final Double weight;
+        final int weight;
 
-        QueueEntry(V entry, Double weight) {
+        QueueEntry(V entry, int weight) {
             this.entry = entry;
             this.weight = weight;
         }

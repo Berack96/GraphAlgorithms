@@ -1,18 +1,17 @@
 package berack96.lib.graph.visit;
 
+import berack96.lib.graph.Edge;
+
 import java.util.List;
 import java.util.Map;
-
-import berack96.lib.graph.Edge;
 
 /**
  * Interface that is helpful for implements visit that needs to retrieve the distance between a vertex to all the others
  *
  * @param <V> the vertex
- * @param <W> the weight
  * @author Berack96
  */
-public interface VisitDistance<V, W extends Number> extends VisitStrategy<V, W> {
+public interface VisitDistance<V> extends VisitStrategy<V> {
 
     /**
      * Get the last calculated distance to all the possible destinations<br>
@@ -23,7 +22,7 @@ public interface VisitDistance<V, W extends Number> extends VisitStrategy<V, W> 
      * @return the last distance
      * @throws NullPointerException if the visit is not already been done
      */
-    Map<V, List<Edge<V, W>>> getLastDistance() throws NullPointerException;
+    Map<V, List<Edge<V>>> getLastDistance() throws NullPointerException;
 
     /**
      * Get the last source vertex of the visit for calculating the destinations.<br>

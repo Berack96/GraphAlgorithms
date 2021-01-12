@@ -10,14 +10,14 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class VertexListener<V> implements GraphListener {
 
-    protected final GraphPanel<V, ?> panel;
+    protected final GraphPanel<V> panel;
     private final AtomicReference<VertexComponent<V>> componentPressed = new AtomicReference<>();
 
-    public VertexListener(GraphPanel<V, ?> panel) {
+    public VertexListener(GraphPanel<V> panel) {
         this.panel = panel;
     }
 
-    protected abstract V buildNewVertex(Graph<V, ?> graph);
+    protected abstract V buildNewVertex(Graph<V> graph);
 
     @Override
     public String getDescription() {

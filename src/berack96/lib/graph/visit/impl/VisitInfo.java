@@ -12,9 +12,9 @@ import java.util.function.Consumer;
  * @param <V> the vertex of the visit
  * @author Berack96
  */
-public class VisitInfo<V> {
+public class VisitInfo<V> implements Iterable<VisitInfo<V>.VertexInfo> {
     private static final int NOT_SET = -1;
-    
+
     private final Map<V, VertexInfo> vertices;
     private final V source;
     private long time;
@@ -229,11 +229,11 @@ public class VisitInfo<V> {
      *
      * @param consumer the function to apply to each
      */
-    public void forEachDiscovered(Consumer<VertexInfo> consumer) {
+    public void forEachDiscovered(Consumer<? super VertexInfo> consumer) {
         Queue<VertexInfo> queue = new PriorityQueue<>();
-        vertices.forEach((v, info) -> { 
-        	if(info.timeDiscovered != NOT_SET)
-        		queue.offer(new VertexInfo(info, false));
+        vertices.forEach((v, info) -> {
+            if (info.timeDiscovered != NOT_SET)
+                queue.offer(new VertexInfo(info, false));
         });
 
         while (!queue.isEmpty())
@@ -246,41 +246,35 @@ public class VisitInfo<V> {
      *
      * @param consumer the function to apply to each
      */
-    public void forEachVisited(Consumer<VertexInfo> consumer) {
+    public void forEachVisited(Consumer<? super VertexInfo> consumer) {
         Queue<VertexInfo> queue = new PriorityQueue<>();
-        vertices.forEach((v, info) -> { 
-        	if(info.timeVisited != NOT_SET)
-        		queue.offer(new VertexInfo(info, true));
+        vertices.forEach((v, info) -> {
+            if (info.timeVisited != NOT_SET)
+                queue.offer(new VertexInfo(info, true));
         });
 
         while (!queue.isEmpty())
             consumer.accept(queue.poll());
     }
 
-    /**
-     * Iterate through all the vertices discovered and visited with the correct timeline.<br>
-     * The vertices will be visited in the order that they are discovered and visited, so a vertex can appear two times (one for the discovery, anc the other for the visit)
-     *
-     * @param consumer the function to apply at each vertex
-     */
-    public void forEach(Consumer<VertexInfo> consumer) {
-        Queue<VertexInfo> queue = new PriorityQueue<>();
-        vertices.forEach((v, info) -> { 
-        	if(info.timeDiscovered != NOT_SET)
-        		queue.offer(new VertexInfo(info, false));
-        	if(info.timeVisited != NOT_SET)
-        		queue.offer(new VertexInfo(info, true));
+    @Override
+    public Iterator<VertexInfo> iterator() {
+        List<VertexInfo> list = new ArrayList<>(vertices.size() * 2);
+        vertices.forEach((v, info) -> {
+            if (info.timeDiscovered != NOT_SET)
+                list.add(new VertexInfo(info, false));
+            if (info.timeVisited != NOT_SET)
+                list.add(new VertexInfo(info, true));
         });
-        
-        while (!queue.isEmpty())
-            consumer.accept(queue.remove());
+        Collections.sort(list);
+        return list.iterator();
     }
-    
+
     /**
      * Class used mainly for storing the data of the visit
      */
     public class VertexInfo implements Comparable<VertexInfo> {
-		public V vertex;
+        public V vertex;
         public V parent;
         public long timeDiscovered;
         public long timeVisited;

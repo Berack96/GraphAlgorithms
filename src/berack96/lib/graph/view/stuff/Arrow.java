@@ -1,6 +1,7 @@
 package berack96.lib.graph.view.stuff;
 
 import java.awt.*;
+import java.io.Serial;
 
 /**
  * Class that create a Polygon that has a shape of an arrow
@@ -8,9 +9,10 @@ import java.awt.*;
  * @author Berack96
  */
 public class Arrow extends Polygon {
-	private static final long serialVersionUID = 1L;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-	/**
+    /**
      * Create an arrow
      *
      * @param start    the starting point of your arrow (the base)

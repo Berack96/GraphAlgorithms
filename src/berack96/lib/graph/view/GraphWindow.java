@@ -19,25 +19,25 @@ import java.util.Set;
  *
  * @author Berack96
  */
-public class GraphWindow<V, W extends Number> extends JFrame {
+public class GraphWindow<V> extends JFrame {
 
-	@Serial
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final GraphPanel<V, W> graphPanel;
+    private final GraphPanel<V> graphPanel;
 
-    public GraphWindow(GraphPanel<V, W> graphPanel, VertexListener<V> vListener, EdgeListener<V, W> eListener) {
+    public GraphWindow(GraphPanel<V> graphPanel, VertexListener<V> vListener, EdgeListener<V> eListener) {
         this.setTitle("Grafo");
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setLayout(new BorderLayout());
 
-        Set<VisitStrategy<V, W>> strats = new LinkedHashSet<>();
+        Set<VisitStrategy<V>> strats = new LinkedHashSet<>();
         strats.add(new DFS<>());
         strats.add(new BFS<>());
         strats.add(new Dijkstra<>());
         strats.add(new Tarjan<>());
 
-        GraphInfo<V, W> infoPanel = new GraphInfo<>(graphPanel, vListener, eListener, strats);
+        GraphInfo<V> infoPanel = new GraphInfo<>(graphPanel, vListener, eListener, strats);
         this.graphPanel = graphPanel;
         this.add(infoPanel, BorderLayout.EAST);
         this.add(graphPanel);
@@ -47,7 +47,7 @@ public class GraphWindow<V, W extends Number> extends JFrame {
         VisitListener.changeRefresh(millis);
     }
 
-    public GraphPanel<V, W> getGraphPanel() {
+    public GraphPanel<V> getGraphPanel() {
         return graphPanel;
     }
 }

@@ -4,19 +4,21 @@ import berack96.lib.graph.Edge;
 import berack96.lib.graph.view.vertex.VertexComponent;
 
 import java.awt.*;
+import java.io.Serial;
 
-public class EdgeComponent<V, W extends Number> extends Component {
-	private static final long serialVersionUID = 1L;
-	
-	public final VertexComponent<V> source;
+public class EdgeComponent<V> extends Component {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    public final VertexComponent<V> source;
     public final VertexComponent<V> destination;
-    public final W weight;
-    public final Edge<V, W> edge;
+    public final int weight;
+    public final Edge<V> edge;
 
-    public EdgeComponent(VertexComponent<V> source, VertexComponent<V> destination, W weight) {
+    public EdgeComponent(VertexComponent<V> source, VertexComponent<V> destination, int weight) {
         this.source = source;
         this.destination = destination;
         this.weight = weight;
-        this.edge = new Edge<>(source.vertex.getValue(), destination.vertex.getValue(), weight);
+        this.edge = new Edge<>(source.vertex.get(), destination.vertex.get(), weight);
     }
 }

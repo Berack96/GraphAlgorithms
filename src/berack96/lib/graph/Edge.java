@@ -1,13 +1,15 @@
 package berack96.lib.graph;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * Class used for retrieving the edges of the graph.
  *
  * @param <V> the vertices
- * @param <W> the weight of the edge
  * @author Berack96
  */
-public class Edge<V, W extends Number> {
+public class Edge<V> implements Comparable<Edge<V>> {
 
     /**
      * The source vertex
@@ -20,19 +22,42 @@ public class Edge<V, W extends Number> {
     /**
      * The weight of this edge
      */
-    private final W weight;
+    private final int weight;
 
     /**
-     * Create an final version of this object
+     * Create a final version of this object with weight 1
+     *
+     * @param source      the source of the edge
+     * @param destination the destination of the edge
+     */
+    public Edge(V source, V destination) {
+        this(source, destination, 1);
+    }
+
+    /**
+     * Create a final version of this object
      *
      * @param source      the source of the edge
      * @param destination the destination of the edge
      * @param weight      the weight of the edge
      */
-    public Edge(V source, V destination, W weight) {
+    public Edge(V source, V destination, int weight) {
         this.source = source;
         this.destination = destination;
         this.weight = weight;
+    }
+
+    /**
+     *
+     */
+    public Collection<V> getVertices() {
+        if (source == null && destination == null)
+            return List.of();
+        if (source == null)
+            return List.of(destination);
+        if (destination == null)
+            return List.of(source);
+        return List.of(source, destination);
     }
 
     /**
@@ -58,7 +83,7 @@ public class Edge<V, W extends Number> {
      *
      * @return the weight
      */
-    public W getWeight() {
+    public int getWeight() {
         return weight;
     }
 
@@ -79,5 +104,10 @@ public class Edge<V, W extends Number> {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    @Override
+    public int compareTo(Edge<V> edge) {
+        return weight - edge.weight;
     }
 }

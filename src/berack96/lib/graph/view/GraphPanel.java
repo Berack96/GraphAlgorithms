@@ -1,6 +1,5 @@
 package berack96.lib.graph.view;
 
-import berack96.lib.graph.Edge;
 import berack96.lib.graph.Graph;
 import berack96.lib.graph.Vertex;
 import berack96.lib.graph.impl.MapGraph;
@@ -19,31 +18,29 @@ import java.util.Observer;
 import java.util.Set;
 
 @SuppressWarnings({"unchecked", "deprecation"})
-public class GraphPanel<V, W extends Number> extends Component {
+public class GraphPanel<V> extends Component {
 
-	@Serial
+    @Serial
     private static final long serialVersionUID = 1L;
-	private final GraphicalView<VertexComponent<V>> vertexRender;
-    private final GraphicalView<EdgeComponent<V, W>> edgeRender;
+    private final GraphicalView<VertexComponent<V>> vertexRender;
+    private final GraphicalView<EdgeComponent<V>> edgeRender;
     private final Class<V> classV;
-    private final Class<W> classW;
 
     final Container vertices = new Container();
     final Container edges = new Container();
 
-    private final Graph<V, W> graph = new MapGraph<>();
+    private final Graph<V> graph = new MapGraph<>();
     private final Set<Observer> observers = new HashSet<>();
-    
+
     private GraphListener old = null;
 
-    public GraphPanel(GraphicalView<VertexComponent<V>> vertexRender, GraphicalView<EdgeComponent<V, W>> edgeRender, Class<V> classV, Class<W> classW) {
+    public GraphPanel(GraphicalView<VertexComponent<V>> vertexRender, GraphicalView<EdgeComponent<V>> edgeRender, Class<V> classV) {
         this.vertexRender = vertexRender;
         this.edgeRender = edgeRender;
         this.classV = classV;
-        this.classW = classW;
     }
 
-    public Graph<V, W> getGraph() {
+    public Graph<V> getGraph() {
         return graph;
     }
 
@@ -89,7 +86,8 @@ public class GraphPanel<V, W extends Number> extends Component {
             VertexComponent<V> component = getVertexAt(center);
             component.vertex.remove();
             vertices.remove(component);
-        } catch (Exception ignore) {}
+        } catch (Exception ignore) {
+        }
     }
 
     public void moveVertex(VertexComponent<V> vertex, Point destination) {
@@ -97,38 +95,38 @@ public class GraphPanel<V, W extends Number> extends Component {
         vertex.setLocation(rectangle.x, rectangle.y);
     }
 
-    public void addEdge(Edge<V, W> edge) {
-    	VertexComponent<V> vSource = null;
-    	VertexComponent<V> vDest = null;
-    	for (Component comp : vertices.getComponents()) {
-    		VertexComponent<V> temp = (VertexComponent<V>) comp;
-    		V vTemp = temp.vertex.getValue();
-    		if (vSource == null && vTemp.equals(edge.getSource()))
-    			vSource = temp;
-    		if (vDest == null && vTemp.equals(edge.getDestination()))
-    			vDest = temp;
-    	}
-    	addEdge(vSource, vDest, edge.getWeight());
+    public void addEdge(V source, V destination, int weight) {
+        VertexComponent<V> vSource = null;
+        VertexComponent<V> vDest = null;
+        for (Component comp : vertices.getComponents()) {
+            VertexComponent<V> temp = (VertexComponent<V>) comp;
+            V vTemp = temp.vertex.get();
+            if (vSource == null && vTemp.equals(source))
+                vSource = temp;
+            if (vDest == null && vTemp.equals(destination))
+                vDest = temp;
+        }
+        addEdge(vSource, vDest, weight);
     }
-    
-    public void addEdge(VertexComponent<V> source, VertexComponent<V> dest, W weight) {
+
+    public void addEdge(VertexComponent<V> source, VertexComponent<V> dest, int weight) {
         try {
             Point center = new Point(Math.abs(source.getX() - dest.getY()), Math.abs(source.getY() - dest.getY()));
-            EdgeComponent<V, W> edgeComponent = new EdgeComponent<>(source, dest, weight);
+            EdgeComponent<V> edgeComponent = new EdgeComponent<>(source, dest, weight);
             edgeComponent.setBounds(edgeRender.getBox(edgeComponent, center));
             edges.add(edgeComponent);
             graph.addEdge(edgeComponent.edge);
         } catch (Exception e) {
-        	e.printStackTrace();
+            e.printStackTrace();
         }
     }
 
     public void removeEdge(VertexComponent<V> source, VertexComponent<V> dest) {
         try {
-            graph.removeEdge(source.vertex.getValue(), dest.vertex.getValue());
-            EdgeComponent<V, W> toRemove = null;
+            graph.removeEdge(source.vertex.get(), dest.vertex.get());
+            EdgeComponent<V> toRemove = null;
             for (Component c : edges.getComponents()) {
-                EdgeComponent<V, W> edge = (EdgeComponent<V, W>) c;
+                EdgeComponent<V> edge = (EdgeComponent<V>) c;
                 if (edge.source.equals(source) && edge.destination.equals(dest))
                     toRemove = edge;
             }
@@ -137,7 +135,7 @@ public class GraphPanel<V, W extends Number> extends Component {
         } catch (Exception ignore) {}
     }
 
-    public void modEdge(VertexComponent<V> source, VertexComponent<V> dest, W weight) {
+    public void modEdge(VertexComponent<V> source, VertexComponent<V> dest, int weight) {
         removeEdge(source, dest);
         addEdge(source, dest, weight);
     }
@@ -147,9 +145,9 @@ public class GraphPanel<V, W extends Number> extends Component {
         return component instanceof VertexComponent ? (VertexComponent<V>) component : null;
     }
 
-    public EdgeComponent<V, W> getEdgeAt(Point point) {
+    public EdgeComponent<V> getEdgeAt(Point point) {
         Component component = edges.getComponentAt(point);
-        return component instanceof EdgeComponent ? (EdgeComponent<V, W>) component : null;
+        return component instanceof EdgeComponent ? (EdgeComponent<V>) component : null;
     }
 
     public void addObserver(Observer observer) {
@@ -165,7 +163,7 @@ public class GraphPanel<V, W extends Number> extends Component {
     }
     
     public void load(String fileName) throws IOException {
-        new GraphPointsSave<>(this).load(graph, fileName, classV, classW);
+        new GraphPointsSave<>(this).load(graph, fileName, classV);
     }
 
     @Override
@@ -180,24 +178,23 @@ public class GraphPanel<V, W extends Number> extends Component {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        Collection<EdgeComponent<V, W>> toRemove = new HashSet<>();
+        Collection<EdgeComponent<V>> toRemove = new HashSet<>();
         for (Component component : edges.getComponents()) {
-            EdgeComponent<V, W> edge = (EdgeComponent<V, W>) component;
+            EdgeComponent<V> edge = (EdgeComponent<V>) component;
             Vertex<V> source = edge.source.vertex;
             Vertex<V> dest = edge.destination.vertex;
-            if (source.isStillContained() && dest.isStillContained() && graph.containsEdge(source.getValue(), dest.getValue())) {
+            if (source.isStillContained() && dest.isStillContained() && graph.containsEdge(source.get(), dest.get())) {
                 Point center = new Point(edge.getX() + edge.getWidth() / 2, edge.getY() + edge.getHeight() / 2);
                 edge.setBounds(edgeRender.getBox(edge, center));
                 edgeRender.paint((Graphics2D) g2.create(), edge, center);
-            }
-            else
+            } else
                 toRemove.add(edge);
         }
         toRemove.forEach(edges::remove);
 
         for (Component component : vertices.getComponents()) {
             VertexComponent<V> vertex = (VertexComponent<V>) component;
-            if (graph.contains(vertex.vertex.getValue())) {
+            if (graph.contains(vertex.vertex.get())) {
                 Point center = new Point(vertex.getX() + vertex.getWidth() / 2, vertex.getY() + vertex.getHeight() / 2);
                 vertexRender.paint((Graphics2D) g2.create(), vertex, center);
             }

@@ -14,28 +14,28 @@ import java.io.Serial;
 import java.util.List;
 import java.util.*;
 
-public class GraphInfo<V, W extends Number> extends JPanel {
+public class GraphInfo<V> extends JPanel {
 
-	@Serial
+    @Serial
     private static final long serialVersionUID = 1L;
-	
+
     private final Map<String, VisitListener<V>> visits;
 
-    public GraphInfo(GraphPanel<V, W> graphPanel, VertexListener<V> vListener, EdgeListener<V, W> eListener, Set<VisitStrategy<V, W>> visits) {
+    public GraphInfo(GraphPanel<V> graphPanel, VertexListener<V> vListener, EdgeListener<V> eListener, Set<VisitStrategy<V>> visits) {
         this.visits = new HashMap<>();
 
         /* ZERO (DESCRIPTION) */
         JLabel listenerDescription = new JLabel();
-        
+
         JPanel panelDescription = new JPanel();
         panelDescription.setOpaque(false);
         panelDescription.add(listenerDescription);
-        
+
         /* FIRST (GRAPH INFO) */
 
         JLabel vNumber = new JLabel(String.valueOf(graphPanel.getGraph().size()));
         JLabel eNumber = new JLabel(String.valueOf(graphPanel.getGraph().numberOfEdges()));
-        JLabel gCyclic = new JLabel(String.valueOf(graphPanel.getGraph().isCyclic()));
+        //JLabel gCyclic = new JLabel(String.valueOf(graphPanel.getGraph().isCyclic()));
 
         List<Component> components = new LinkedList<>();
         JLabel selected = new JLabel();
@@ -59,7 +59,7 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         });
 
         comboBox.addItem("None");
-        for(VisitStrategy<V, W> strategy: visits) {
+        for (VisitStrategy<V> strategy : visits) {
             String clazz = strategy.getClass().getSimpleName();
             VisitListener<V> visit = new VisitListener<>(graphPanel, strategy);
             comboBox.addItem(clazz);
@@ -75,7 +75,7 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         components.add(new JLabel("Edge Number: "));
         components.add(eNumber);
         components.add(new JLabel("Is Cyclic: "));
-        components.add(gCyclic);
+        //components.add(gCyclic);
 
         JPanel panelInfo = new JPanel();
         panelInfo.setOpaque(false);
@@ -182,21 +182,21 @@ public class GraphInfo<V, W extends Number> extends JPanel {
         modVertex.doClick();
 
         graphPanel.addObserver((o, arg) -> {
-            Graph<V, W> graph = graphPanel.getGraph();
+            Graph<V> graph = graphPanel.getGraph();
             if(arg.equals(graph)) {
                 vNumber.setText(String.valueOf(graph.size()));
                 eNumber.setText(String.valueOf(graph.numberOfEdges()));
-                gCyclic.setText(String.valueOf(graph.isCyclic()));
+                //gCyclic.setText(String.valueOf(graph.isCyclic()));
                 
                 /* There should be only one */
                 for(V v : graph.getMarkedWith("selected")) {
-                	int inE = graph.getEdgesIn(v).size();
-                	int outE = graph.getEdgesOut(v).size();
-                	
-                	vEdgesInNumber.setText(String.valueOf(inE));
-                	vEdgesOutNumber.setText(String.valueOf(outE));
-                	vEdgesNumber.setText(String.valueOf(inE + outE));
-                	vVertex.setText(v.toString());
+                    int inE = graph.getAncestors(v).size();
+                    int outE = graph.getChildren(v).size();
+
+                    vEdgesInNumber.setText(String.valueOf(inE));
+                    vEdgesOutNumber.setText(String.valueOf(outE));
+                    vEdgesNumber.setText(String.valueOf(inE + outE));
+                    vVertex.setText(v.toString());
                 }
             }
         });

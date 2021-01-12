@@ -14,13 +14,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class VisitListener<V> implements GraphListener {
 
-    private final GraphPanel<V, ?> panel;
-    private final VisitStrategy<V, ?> strategy;
+    private final GraphPanel<V> panel;
+    private final VisitStrategy<V> strategy;
     private final Set<Timer> timers = new HashSet<>();
 
     private static int refreshTime = 1000;
 
-    public VisitListener(GraphPanel<V, ?> panel, VisitStrategy<V, ?> strategy) {
+    public VisitListener(GraphPanel<V> panel, VisitStrategy<V> strategy) {
         this.panel = panel;
         this.strategy = strategy;
     }
@@ -46,8 +46,8 @@ public class VisitListener<V> implements GraphListener {
     @Override
     public void mousePressed(MouseEvent e) {
         this.remove();
-        
-        Graph<V, ?> graph = panel.getGraph();
+
+        Graph<V> graph = panel.getGraph();
         graph.unMarkAll();
         panel.repaint();
 

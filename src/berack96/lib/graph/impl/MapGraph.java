@@ -1,7 +1,7 @@
 package berack96.lib.graph.impl;
 
-import berack96.lib.graph.Edge;
 import berack96.lib.graph.Graph;
+import berack96.lib.graph.GraphDirected;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,97 +14,92 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This happen if the HashMap is not reallocated. So in the end each operation of adding or removing has O(n)
  *
  * @param <V> the vertices
- * @param <W> the weight of the edges
  * @author Berack96
  */
-public class MapGraph<V, W extends Number> extends AGraph<V, W> {
+public class MapGraph<V> extends GraphDirected<V> {
 
-    /**
-     * Map that contains the edges from a vertex to another<br>
-     * The first vertex is the vertex where start the edge, the second one is where the edge goes<br>
-     * If an edge exist, then it's weight is returned
-     */
-    private final Map<V, Map<V, W>> edges = new HashMap<>();
-    
-    @Override
-    public Iterator<V> iterator() {
-        return edges.keySet().iterator();
-    }
+	/**
+	 * Map that contains the edges from a vertex to another<br>
+	 * The first vertex is the vertex where start the edge, the second one is where the edge goes<br>
+	 * If an edge exist, then it's weight is returned
+	 */
+	private final Map<V, Map<V, Integer>> edges = new HashMap<>();
+
+	@Override
+	public Iterator<V> iterator() {
+		return edges.keySet().iterator();
+	}
 
 
 	@Override
-	protected Graph<V, W> getNewInstance() {
+	protected Graph<V> getNewInstance() {
 		return new MapGraph<>();
 	}
 
 	@Override
-	protected void addVertex(V vertex) {
-        edges.put(vertex, new HashMap<>());
+	public void add(V vertex) {
+		check(vertex);
+		edges.computeIfAbsent(vertex, v -> new HashMap<>());
+		edges.forEach((v, adj) -> adj.remove(vertex));
+		edges.get(vertex).clear();
 	}
 
 	@Override
-	protected boolean containsVertex(V vertex) {
+	public boolean contains(V vertex) {
+		check(vertex);
 		return edges.containsKey(vertex);
 	}
 
 	@Override
-	protected void removeVertex(V vertex) {
+	public void remove(V vertex) {
+		checkVert(vertex);
 		edges.remove(vertex);
-        edges.forEach((v, map) -> map.remove(vertex));
+		edges.forEach((v, map) -> map.remove(vertex));
 	}
 
 	@Override
-	protected void removeAllVertices() {
-        edges.clear();
+	public int addEdge(V vertex1, V vertex2, int weight) {
+		checkVert(vertex1, vertex2);
+		Map<V, Integer> edge = edges.get(vertex1);
+		Integer old = edge.get(vertex2);
+		old = old == null ? NO_EDGE : old;
+
+		if (weight == NO_EDGE)
+			edge.remove(vertex2);
+		else
+			edge.put(vertex2, weight);
+		return old;
 	}
 
 	@Override
-	protected boolean containsEdgeImpl(V vertex1, V vertex2) {
-		return contains(vertex1) && contains(vertex2) && edges.get(vertex1).containsKey(vertex2);
+	public int getWeight(V vertex1, V vertex2) {
+		checkVert(vertex1, vertex2);
+		Integer weight = edges.get(vertex1).get(vertex2);
+		return weight == null ? NO_EDGE : weight;
 	}
 
 	@Override
-	protected W addEdgeImpl(V vertex1, V vertex2, W weight) {
-		return edges.get(vertex1).put(vertex2, weight);
+	public Collection<V> getChildren(V vertex) throws NullPointerException, IllegalArgumentException {
+		checkVert(vertex);
+		return new HashSet<>(edges.get(vertex).keySet());
 	}
 
 	@Override
-	protected W getWeightImpl(V vertex1, V vertex2) {
-        return edges.get(vertex1).get(vertex2);
-	}
-
-    @Override
-    protected Collection<Edge<V, W>> getEdgesOutImpl(V vertex) {
-        Collection<Edge<V, W>> collection = new HashSet<>();
-        edges.get(vertex).forEach((dest, weight) -> collection.add(new Edge<>(vertex, dest, weight)));
-        return collection;
-    }
-    
-	@Override
-	protected Collection<Edge<V, W>> getEdgesInImpl(V vertex) {
-		Collection<Edge<V, W>> collection = new HashSet<>();
-        edges.forEach((source, edge) -> {
-            if (edge.get(vertex) != null)
-                collection.add(new Edge<>(source, vertex, edge.get(vertex)));
-        });
-        return collection;
+	public Collection<V> getAncestors(V vertex) throws NullPointerException, IllegalArgumentException {
+		checkVert(vertex);
+		Collection<V> ancestors = new HashSet<>();
+		edges.forEach((v, adj) -> {
+			if (adj.containsKey(vertex))
+				ancestors.add(v);
+		});
+		return ancestors;
 	}
 
 	@Override
-	protected void removeEdgeImpl(V vertex1, V vertex2) {
-		edges.get(vertex1).remove(vertex2);
+	public void removeAll() {
+		edges.clear();
 	}
 
-	@Override
-	protected void removeAllOutEdgeImpl(V vertex) {
-		edges.put(vertex, new HashMap<>());
-	}
-
-	@Override
-	protected void removeAllInEdgeImpl(V vertex) {
-        edges.forEach((v, map) -> map.remove(vertex));
-	}
-	
 	@Override
     public int size() {
         return edges.size();

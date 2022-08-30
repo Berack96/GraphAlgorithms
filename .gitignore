@@ -125,6 +125,7 @@ local.properties
 
 
 # mine
+target/
 .idea/*
 .project
 *.iml
